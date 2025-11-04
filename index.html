@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acompanhamento de Chamados MVNO Nubank N2</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+</head>
+<body>
+
+    <header>
+        <h1>Adicione aqui seus chamados para que os coleguinhas possam atuar após o término do seu turno!</h1>
+        <button id="add-task-btn" class="btn-primary">
+            <span class="material-icons-outlined">add</span>
+            Novo Chamado
+        </button>
+    </header>
+
+    <main class="kanban-board">
+        <div class="kanban-column">
+            <h2><span class="material-icons-outlined">construction</span> Em Atendimento</h2>
+            <div class="tasks-container" id="in-progress" data-column-id="in-progress"></div>
+        </div>
+        <div class="kanban-column">
+            <h2><span class="material-icons-outlined">support_agent</span> Aguardando Fornecedor</h2>
+            <div class="tasks-container" id="waiting" data-column-id="waiting"></div>
+        </div>
+        <div class="kanban-column">
+            <h2><span class="material-icons-outlined">event</span> Agendado</h2>
+            <div class="tasks-container" id="scheduled" data-column-id="scheduled"></div>
+        </div>
+        <div class="kanban-column">
+            <h2><span class="material-icons-outlined">done_all</span> Concluído</h2>
+            <div class="tasks-container" id="done" data-column-id="done"></div>
+        </div>
+    </main>
+
+    <div id="task-modal" class="modal-overlay">
+        <div class="modal-content">
+            <header class="modal-header">
+                <h3 id="modal-title">Adicionar Novo Chamado</h3>
+                <span class="modal-close" id="modal-close-btn">&times;</span>
+            </header>
+
+            <form id="task-form">
+                <input type="hidden" id="task-id-input">
+                <div class="form-group">
+                    <label for="task-title-input">Nº do Chamado / Título</label>
+                    <input type="text" id="task-title-input" placeholder="Ex: PDST-000000 / NU-1234" required>
+                </div>
+                <div class="form-group">
+                    <label for="task-analyst-input">Analista Atual</label>
+                    <input type="text" id="task-analyst-input" placeholder="Seu nome">
+                </div>
+                <div class="form-group">
+                    <label for="task-priority-input">Prioridade</label>
+                    <select id="task-priority-input">
+                        <option value="low">Baixa</option>
+                        <option value="medium" selected>Média</option>
+                        <option value="high">Alta</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="task-description-input">Notas de Handoff (O que foi feito / Próximos passos)</label>
+                    <textarea id="task-description-input" rows="6" placeholder="Descreva o que foi feito e analisado até o momento, incluíndo por exemplo, o número de um chamado aberto para o NOC!"></textarea>
+                </div>
+            
+                <div class="modal-timestamps">
+                    <div class="timestamp-item" id="modal-created-at">
+                        </div>
+                    <div class="timestamp-item" id="modal-reopened-at">
+                        </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" id="delete-task-btn" class="btn-danger">Excluir</button>
+                    <button type="submit" class="btn-primary">Salvar</button>
+                </div>
+            </form> 
+            </div>
+    </div>
+
+    <div id="reopen-modal" class="modal-overlay">
+        <div class="modal-content">
+            <header class="modal-header">
+                <h3 id="reopen-modal-title">Reabrir Chamado</h3>
+                <span class="modal-close" id="reopen-modal-close-btn">&times;</span>
+            </header>
+            <div class="modal-body">
+                <p>Este chamado está marcado como "Concluído". Deseja reabri-lo?</p>
+                <p>Ele será movido para a coluna "Em Atendimento" e marcado como reaberto.</p>
+                <div class="modal-timestamps">
+                    <div class="timestamp-item" id="reopen-modal-created-at"></div>
+                </div>
+            </div>
+            <div class="form-actions" id="reopen-form-actions">
+                <button type="button" id="reopen-cancel-btn" class="btn-danger">Cancelar</button>
+                <button type="button" id="reopen-confirm-btn" class="btn-primary">Sim, Reabrir</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="confirm-done-modal" class="modal-overlay">
+        <div class="modal-content">
+            <header class="modal-header">
+                <h3 id="confirm-done-modal-title">Concluir Chamado</h3>
+                <span class="modal-close" id="confirm-done-modal-close-btn">&times;</span>
+            </header>
+            <div class="modal-body">
+                <p>Tem certeza que deseja marcar este chamado como "Concluído"?</p>
+                <p>A tag de reabertura (se existir) será removida e o card será travado.</p>
+                <div class="modal-timestamps">
+                    <div class="timestamp-item" id="confirm-done-modal-created-at"></div>
+                    <div class="timestamp-item" id="confirm-done-modal-reopened-at"></div>
+                </div>
+            </div>
+            <div class="form-actions" id="confirm-done-form-actions">
+                <button type="button" id="confirm-done-cancel-btn" class="btn-danger">Cancelar</button>
+                <button type="button" id="confirm-done-confirm-btn" class="btn-primary">Sim, Concluir</button>
+            </div>
+        </div>
+    </div>
+
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="script.js"></script>
+</body>
+</html>
