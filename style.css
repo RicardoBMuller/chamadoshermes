@@ -1,123 +1,326 @@
 /* --- Configurações Globais e Variáveis --- */
 :root {
-    --color-bg-primary: #1a1a2e;
-    --color-bg-secondary: #16213e;
-    --color-bg-tertiary: #0f3460;
-    --color-card-bg: #2a2a40; /* Cor de fundo dos cards */
+    --color-bg-primary: #1a1a2e; /* Cor do painel de conteúdo */
+    --color-bg-secondary: #16213e; /* Cor da sidebar */
+    --color-bg-tertiary: #0f3460; /* Cor de fundo (chão) */
+    --color-bg-header: #121222; /* Cor do header superior */
+    --color-card-bg: #2a2a40;
     --color-accent: #e94560;
     --color-text-primary: #f0f0f0;
     --color-text-secondary: #a0a0c0;
     --color-border: #404060;
     --shadow-light: 0 4px 10px rgba(0, 0, 0, 0.2);
     --shadow-medium: 0 6px 20px rgba(0, 0, 0, 0.3);
-    --border-radius: 8px;
+    --border-radius: 12px; /* ★★★ BORDAS MAIS REDONDAS ★★★ */
+    --header-height: 65px; /* Altura do header superior */
+    --app-padding: 15px; /* Espaçamento da "moldura" */
+    --app-gap: 15px; /* Espaço entre os painéis */
+
+    /* Larguras da Sidebar */
+    --sidebar-width-expanded: 260px;
+    --sidebar-width-collapsed: 80px;
+    --sidebar-width: var(--sidebar-width-collapsed); /* ★★★ PADRÃO É RECOLHIDO ★★★ */
 }
 
-/* --- Animação de Fundo --- */
+/* --- Animações --- */
 @keyframes moveBackground {
     0% { background-position: 0% 50%; }
     50% { background-position: 100% 50%; }
     100% { background-position: 0% 50%; }
 }
-
-/* --- Animação de Fade-in dos Cards --- */
 @keyframes cardFadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(15px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+    from { opacity: 0; transform: translateY(15px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-}
-
-/* --- Body com Fundo Animado --- */
-body {
     font-family: 'Roboto', sans-serif;
-    color: var(--color-text-primary);
-    line-height: 1.6;
-    padding: 20px;
-    background: linear-gradient(-45deg, var(--color-bg-primary), var(--color-bg-secondary), var(--color-bg-tertiary), #1f2a40);
-    background-size: 400% 400%;
-    animation: moveBackground 30s ease infinite;
 }
 
 h1, h2, h3, h4, h5, h6 {
     font-weight: 500;
     margin-bottom: 0.5em;
+    color: var(--color-text-primary);
 }
-
 p {
     margin-bottom: 1em;
+    color: var(--color-text-secondary);
 }
 
-/* --- Cabeçalho Principal --- */
-header {
+/* --- Layout Principal --- */
+body {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 25px;
-    padding: 0 10px;
-}
-
-header h1 {
+    flex-direction: column; 
+    height: 100vh;
+    overflow: hidden;
     color: var(--color-text-primary);
-    font-weight: 300;
+    background: var(--color-bg-tertiary);
+    /* ★★★ Lógica de expandir/recolher ★★★ */
+    transition: --sidebar-width 0.3s ease;
+}
+/* Quando o body tem a classe, a variável muda */
+body.sidebar-expanded {
+    --sidebar-width: var(--sidebar-width-expanded);
 }
 
-/* --- Botões --- */
-.btn-primary {
+
+/* --- Cabeçalho Superior --- */
+.app-header {
+    display: grid;
+    grid-template-columns: var(--sidebar-width) 1fr auto; /* Coluna 1 = Largura da sidebar */
+    align-items: center;
+    gap: 20px;
+    padding: 0 var(--app-padding);
+    height: var(--header-height);
+    background-color: var(--color-bg-header);
+    border-bottom: 1px solid var(--color-border);
+    flex-shrink: 0;
+    z-index: 200;
+    transition: grid-template-columns 0.3s ease; /* Anima junto com a sidebar */
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    overflow: hidden; /* Impede que o título vaze */
+}
+
+.app-logo-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px;
+    border-radius: var(--border-radius);
+    background-color: transparent;
+    transition: background-color 0.2s ease;
+    white-space: nowrap; /* Impede quebra de linha */
+}
+.app-logo-wrapper:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.app-logo-img {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid var(--color-border);
+    flex-shrink: 0; /* Impede que o logo encolha */
+}
+.app-title {
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: var(--color-text-primary);
+    opacity: 0; /* ★★★ Escondido por padrão ★★★ */
+    transition: opacity 0.2s ease;
+}
+/* Mostra o título quando expandido */
+body.sidebar-expanded .app-title {
+    opacity: 1;
+}
+
+.header-center {
+    display: flex;
+    justify-content: center;
+}
+.search-bar-container {
+    display: flex;
+    align-items: center;
+    background-color: var(--color-bg-primary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius);
+    padding: 0 12px;
+    width: 100%;
+    max-width: 700px; 
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.search-bar-container:focus-within {
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px rgba(233, 69, 96, 0.3);
+}
+.search-bar-container .material-icons-outlined {
+    color: var(--color-text-secondary);
+}
+#search-bar {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--color-text-primary);
+    font-size: 1rem;
+    padding: 12px 10px;
+    width: 100%;
+}
+#search-bar::placeholder {
+    color: var(--color-text-secondary);
+}
+
+.header-right {
+    display: flex;
+    justify-content: flex-end;
+}
+
+/* --- Container Principal (Sidebar + Conteúdo) --- */
+.app-container {
+    position: relative;
+    display: grid;
+    grid-template-columns: var(--sidebar-width) 1fr;
+    gap: var(--app-gap);
+    padding: var(--app-padding);
+    flex-grow: 1;
+    height: calc(100vh - var(--header-height));
+    transition: grid-template-columns 0.3s ease;
+}
+
+/* --- Sidebar "Flutuante" --- */
+.sidebar {
+    background-color: var(--color-bg-secondary); /* ★★★ Cor da sidebar diferente ★★★ */
+    border-radius: var(--border-radius);
+    padding: 15px; /* Padding menor */
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* Impede que o texto vaze */
+    transition: all 0.3s ease;
+}
+
+.menu-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 5px; 
+    margin-top: 15px; /* Espaçamento do topo da sidebar */
+}
+
+/* ★★★ NOVO: Estilo dos Itens de Menu (Sidebar) ★★★ */
+.menu-item {
+    display: flex;
+    align-items: center;
+    gap: 15px; 
+    padding: 10px; /* Padding uniforme */
+    border-radius: var(--border-radius);
+    color: var(--color-text-secondary);
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.95rem;
+    transition: background-color 0.2s ease, color 0.2s ease;
+    white-space: nowrap; 
+    height: 48px; /* Altura fixa */
+}
+.menu-item:hover {
+    background-color: var(--color-bg-tertiary);
+    color: var(--color-text-primary);
+}
+.menu-item.active {
     background-color: var(--color-accent);
     color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: var(--border-radius);
-    cursor: pointer;
-    font-size: 16px;
-    font-weight: 500;
+    box-shadow: 0 4px 10px rgba(233, 69, 96, 0.3);
+}
+
+/* Ícone */
+.menu-item .material-icons-outlined {
+    width: 28px; /* Tamanho do ícone */
+    height: 28px;
     display: flex;
     align-items: center;
-    gap: 8px;
-    transition: background-color 0.2s ease, transform 0.2s ease;
-}
-
-.btn-primary:hover {
-    background-color: #d83a56;
-    transform: translateY(-2px);
-}
-
-.btn-danger {
-    background-color: transparent;
-    color: var(--color-accent);
-    border: 1px solid var(--color-accent);
-    padding: 10px 20px;
-    border-radius: var(--border-radius);
-    cursor: pointer;
-    font-size: 16px;
+    justify-content: center;
+    font-size: 20px;
+    color: var(--color-text-primary);
+    border-radius: 8px; /* ★★★ Círculo vira quadrado arredondado ★★★ */
+    flex-shrink: 0; /* Impede que encolha */
     transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-.btn-danger:hover {
-    background-color: var(--color-accent);
-    color: white;
+/* Texto do Menu */
+.menu-item-text {
+    opacity: 0; /* Escondido por padrão */
+    visibility: hidden;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+}
+
+/* ★★★ LÓGICA DE EXPANDIR SIDEBAR ★★★ */
+body.sidebar-expanded .sidebar {
+    padding: 20px; /* Mais padding quando expandido */
+}
+body.sidebar-expanded .menu-item {
+    padding: 10px 18px; /* Mais padding horizontal */
+}
+body.sidebar-expanded .menu-item-text {
+    opacity: 1;
+    visibility: visible;
 }
 
 
-/* --- Estrutura do Kanban --- */
+/* --- Botão Toggle Flutuante --- */
+.sidebar-toggle {
+    position: absolute;
+    /* Posição no meio da divisão */
+    left: calc(var(--sidebar-width) + var(--app-padding) - (var(--app-gap) / 2));
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 100;
+    
+    background-color: var(--color-bg-header);
+    color: var(--color-text-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow-light);
+    transition: left 0.3s ease, transform 0.3s ease, background-color 0.2s ease;
+}
+.sidebar-toggle:hover {
+    background-color: var(--color-accent);
+    color: white;
+}
+.sidebar-toggle .material-icons-outlined {
+    transition: transform 0.3s ease;
+    font-size: 20px;
+}
+/* Gira a seta quando expandido */
+body.sidebar-expanded .sidebar-toggle .material-icons-outlined {
+    transform: rotate(180deg);
+}
+
+
+/* --- Wrapper do Conteúdo Principal "Flutuante" (Kanban) --- */
+.main-content-wrapper {
+    background-color: var(--color-bg-primary); 
+    border-radius: var(--border-radius);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    background: linear-gradient(-45deg, var(--color-bg-primary), #1f2a40, var(--color-bg-secondary), var(--color-bg-tertiary));
+    background-size: 400% 400%;
+    animation: moveBackground 30s ease infinite;
+}
+
+.page-content {
+    overflow-y: auto;
+    flex-grow: 1;
+    padding: 25px;
+}
+.page { display: none; }
+.page.active { display: block; }
+
+/* --- ★★★ NOVO: Lógica de "arrastar" ★★★ --- */
+/* Quando estamos arrastando, torna todos os outros cards "fantasmas" */
+body.is-dragging .task-card:not(.dragging) {
+    pointer-events: none;
+}
+
+
+/* --- Kanban Board --- */
 .kanban-board {
     display: flex;
     gap: 20px;
     overflow-x: auto;
     padding-bottom: 20px;
 }
-
 .kanban-column {
     flex: 1;
     min-width: 300px;
@@ -127,7 +330,6 @@ header h1 {
     box-shadow: var(--shadow-light);
     transition: background-color 0.3s ease;
 }
-
 .kanban-column h2 {
     display: flex;
     align-items: center;
@@ -139,20 +341,16 @@ header h1 {
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
-
 .tasks-container {
     min-height: 200px;
     padding-top: 20px;
     transition: background-color 0.3s ease;
 }
-
-/* --- Animação de Drag-over --- */
-.tasks-container.drag-over {
+/* A área de drop (destaque) agora é na coluna inteira */
+.kanban-column.drag-over {
     background-color: var(--color-bg-tertiary);
     border: 2px dashed var(--color-accent);
-    border-radius: 5px;
 }
-
 /* --- Cards de Tarefa --- */
 .task-card {
     background-color: var(--color-card-bg);
@@ -163,50 +361,42 @@ header h1 {
     cursor: grab;
     border: 1px solid var(--color-border);
     border-left-width: 5px;
-    transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+    transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease,
+                opacity 0.2s ease; 
     animation: cardFadeIn 0.4s ease-out;
 }
-
 .task-card:hover {
     transform: translateY(-5px);
     box-shadow: var(--shadow-medium);
     border-color: var(--color-accent);
 }
-
-/* O card que está sendo arrastado */
 .task-card.dragging {
     opacity: 0.5;
     transform: scale(0.95);
     box-shadow: var(--shadow-medium);
     cursor: grabbing;
 }
-
-/* Estilo do card "Concluído" */
+.task-card.hidden { display: none; }
 .task-card.is-done {
     background-color: var(--color-bg-tertiary); 
     opacity: 0.7;
-    cursor: pointer; /* Clicável para reabrir */
+    cursor: pointer; 
 }
-
 .task-card.is-done:hover {
     transform: translateY(-5px); 
     box-shadow: var(--shadow-medium);
     border-color: var(--color-accent);
     opacity: 1.0; 
 }
-
-/* Risca o título do card concluído */
 .task-card.is-done h4 {
     text-decoration: line-through;
     color: var(--color-text-secondary);
 }
-
 .task-card h4 {
     color: var(--color-text-primary);
     font-weight: 500;
     margin-bottom: 10px;
 }
-
 .task-description {
     font-size: 0.9rem;
     color: var(--color-text-secondary);
@@ -217,35 +407,29 @@ header h1 {
     overflow: hidden;
     text-overflow: ellipsis;
 }
-
 .task-footer {
     display: flex;
     justify-content: space-between;
     align-items: center;
     font-size: 0.8rem;
 }
-
 .task-analyst {
     background-color: var(--color-bg-tertiary);
     color: var(--color-text-secondary);
     padding: 3px 8px;
     border-radius: 4px;
 }
-
 .task-priority {
     font-weight: 500;
     padding: 3px 8px;
     border-radius: 4px;
 }
-
 .task-priority.high { background-color: #58181F; color: #F8B4B4; border-left: 3px solid #E94560; }
 .task-priority.medium { background-color: #554820; color: #FBE697; border-left: 3px solid #F0A500; }
 .task-priority.low { background-color: #234E4B; color: #A6E9E1; border-left: 3px solid #1abc9c; }
-
 .task-card[data-priority="high"] { border-left-color: #E94560; }
 .task-card[data-priority="medium"] { border-left-color: #F0A500; }
 .task-card[data-priority="low"] { border-left-color: #1abc9c; }
-
 .task-timestamp {
     display: flex;
     align-items: center;
@@ -256,32 +440,68 @@ header h1 {
     padding-top: 8px; 
     border-top: 1px solid var(--color-border); 
 }
-
-.task-timestamp .material-icons-outlined {
-    font-size: 0.9rem; 
-}
-
-/* --- ★★★ SEÇÃO MODIFICADA/ADICIONADA ★★★ --- */
+.task-timestamp .material-icons-outlined { font-size: 0.9rem; }
 .task-reopened-tag {
-    display: inline-flex; /* Alterado de flex para inline-flex */
+    display: inline-flex;
     align-items: center;
     gap: 6px;
     font-size: 0.75rem;
     font-weight: 500;
     color: #f0f0f0;
-    background-color: var(--color-accent); /* Vermelho */
+    background-color: var(--color-accent);
     padding: 2px 8px;
     border-radius: 4px;
     margin-top: 10px;
-    margin-bottom: 10px; /* ★★★ ESPAÇAMENTO ADICIONADO ★★★ */
+    margin-bottom: 10px;
+}
+.task-reopened-tag .material-icons-outlined { font-size: 0.9rem; }
+
+
+/* --- ★★★ Estilos de Botões (CORRIGIDO) ★★★ --- */
+.btn-primary {
+    background-color: var(--color-accent);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: var(--border-radius); /* Borda arredondada */
+    cursor: pointer;
+    font-size: 1rem; /* Tamanho de fonte padrão */
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+    flex-shrink: 0; 
+    box-shadow: var(--shadow-light);
+}
+.btn-primary:hover {
+    background-color: #d83a56;
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-medium);
+}
+.btn-primary:active {
+    transform: translateY(0);
+    box-shadow: none;
 }
 
-.task-reopened-tag .material-icons-outlined {
-    font-size: 0.9rem;
+.btn-danger {
+    background-color: transparent;
+    color: var(--color-accent);
+    border: 1px solid var(--color-accent);
+    padding: 10px 20px;
+    border-radius: var(--border-radius); /* Borda arredondada */
+    cursor: pointer;
+    font-size: 1rem; /* Tamanho de fonte padrão */
+    font-weight: 500;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+.btn-danger:hover {
+    background-color: var(--color-accent);
+    color: white;
 }
 
 
-/* --- Estilos do Modal (Fade In/Out) --- */
+/* --- Estilos do Modal (CORRIGIDO) --- */
 .modal-overlay {
     position: fixed;
     top: 0;
@@ -298,13 +518,11 @@ header h1 {
     z-index: 1000;
     backdrop-filter: blur(5px); 
 }
-
 .modal-overlay.show {
     visibility: visible;
     opacity: 1;
     transition-delay: 0s;
 }
-
 .modal-content {
     background-color: var(--color-bg-secondary);
     padding: 30px;
@@ -317,18 +535,12 @@ header h1 {
     opacity: 0;
     transition: transform 0.3s ease-out, opacity 0.3s ease-out;
 }
-
 .modal-body {
     color: var(--color-text-secondary);
     font-size: 1rem;
     margin-bottom: 20px;
 }
-.modal-body p {
-    margin-bottom: 10px;
-}
-
-/* ★★★ NOVA SEÇÃO DE ESTILOS ★★★ */
-/* Estilos para os timestamps DENTRO dos modais */
+.modal-body p { margin-bottom: 10px; }
 .modal-timestamps {
     margin-top: 20px;
     padding-top: 15px;
@@ -336,32 +548,20 @@ header h1 {
     font-size: 0.85rem;
     color: var(--color-text-secondary);
     display: flex;
-    flex-direction: column; /* Um em cima do outro */
+    flex-direction: column;
     gap: 8px;
 }
-
 .modal-timestamps .timestamp-item {
     display: flex;
     align-items: center;
     gap: 8px;
 }
-
-.modal-timestamps .timestamp-item .material-icons-outlined {
-    font-size: 1rem;
-}
-
-/* Esconde o 'reopened' por padrão se estiver vazio */
-.modal-timestamps .timestamp-item:empty {
-    display: none;
-}
-/* ★★★ FIM DA NOVA SEÇÃO ★★★ */
-
-
+.modal-timestamps .timestamp-item .material-icons-outlined { font-size: 1rem; }
+.modal-timestamps .timestamp-item:empty { display: none; }
 .modal-overlay.show .modal-content {
     transform: translateY(0);
     opacity: 1;
 }
-
 .modal-header {
     display: flex;
     justify-content: space-between;
@@ -370,7 +570,7 @@ header h1 {
     border-bottom: 1px solid var(--color-border);
     padding-bottom: 10px;
 }
-
+/* Botão de fechar do Modal */
 .modal-close {
     font-size: 2rem;
     font-weight: 300;
@@ -378,23 +578,17 @@ header h1 {
     cursor: pointer;
     transition: color 0.2s ease, transform 0.2s ease;
 }
-
 .modal-close:hover {
     color: var(--color-accent);
     transform: rotate(90deg);
 }
-
-#task-form .form-group {
-    margin-bottom: 20px;
-}
-
+#task-form .form-group { margin-bottom: 20px; }
 #task-form label {
     display: block;
     margin-bottom: 8px;
     font-weight: 500;
     color: var(--color-text-secondary);
 }
-
 #task-form input[type="text"],
 #task-form select,
 #task-form textarea {
@@ -407,7 +601,6 @@ header h1 {
     font-size: 1rem;
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
-
 #task-form input[type="text"]:focus,
 #task-form select:focus,
 #task-form textarea:focus {
@@ -415,17 +608,15 @@ header h1 {
     border-color: var(--color-accent);
     box-shadow: 0 0 0 3px rgba(233, 69, 96, 0.3);
 }
-
 .form-actions {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-top: 25px;
 }
-
-/* Alinha botões à direita para os modais de confirmação */
+/* Botões dos modais de confirmação */
 #reopen-form-actions,
 #confirm-done-form-actions {
-    justify-content: flex-end; /* Alinha botões à direita */
-    gap: 15px; /* Espaço entre os botões */
+    justify-content: flex-end;
+    gap: 15px;
 }

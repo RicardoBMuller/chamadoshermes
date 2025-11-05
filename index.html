@@ -3,39 +3,95 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Acompanhamento de Chamados MVNO Nubank N2</title>
+    <title>Acompanhamento de Chamados N2</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
 </head>
-<body>
+<body> <header class="app-header">
+        <div class="header-left">
+            <div class="app-logo-wrapper">
+                <img src="https://iili.io/KZoVAs1.jpg" alt="Logotipo" class="app-logo-img">
+                <span class="app-title">Equipe N2</span>
+            </div>
+        </div>
 
-    <header>
-        <h1>Adicione aqui seus chamados para que os coleguinhas possam atuar após o término do seu turno!</h1>
-        <button id="add-task-btn" class="btn-primary">
-            <span class="material-icons-outlined">add</span>
-            Novo Chamado
-        </button>
+        <div class="header-center">
+            <div class="search-bar-container">
+                <span class="material-icons-outlined">search</span>
+                <input type="text" id="search-bar" placeholder="Pesquisar por título, nº ou analista...">
+            </div>
+        </div>
+
+        <div class="header-right">
+            <button id="add-task-btn" class="btn-primary">
+                <span class="material-icons-outlined">add</span>
+                Criar
+            </button>
+        </div>
     </header>
 
-    <main class="kanban-board">
-        <div class="kanban-column">
-            <h2><span class="material-icons-outlined">construction</span> Em Atendimento</h2>
-            <div class="tasks-container" id="in-progress" data-column-id="in-progress"></div>
-        </div>
-        <div class="kanban-column">
-            <h2><span class="material-icons-outlined">support_agent</span> Aguardando Fornecedor</h2>
-            <div class="tasks-container" id="waiting" data-column-id="waiting"></div>
-        </div>
-        <div class="kanban-column">
-            <h2><span class="material-icons-outlined">event</span> Agendado</h2>
-            <div class="tasks-container" id="scheduled" data-column-id="scheduled"></div>
-        </div>
-        <div class="kanban-column">
-            <h2><span class="material-icons-outlined">done_all</span> Concluído</h2>
-            <div class="tasks-container" id="done" data-column-id="done"></div>
+    <main class="app-container">
+
+        <aside class="sidebar">
+            <nav class="menu-nav">
+                <a href="#" class="menu-item active" data-page="chamados" title="Chamados">
+                    <span class="material-icons-outlined">view_kanban</span>
+                    <span class="menu-item-text">Chamados</span>
+                </a>
+                <a href="#" class="menu-item" data-page="documentacao" title="Documentação">
+                    <span class="material-icons-outlined">description</span>
+                    <span class="menu-item-text">Documentação</span>
+                </a>
+                <a href="#" class="menu-item" data-page="repositorio" title="Repositório">
+                    <span class="material-icons-outlined">folder_open</span>
+                    <span class="menu-item-text">Repositório</span>
+                </a>
+            </nav>
+        </aside>
+
+        <button class="sidebar-toggle" id="sidebar-toggle-btn" title="Expandir/Recolher menu">
+            <span class="material-icons-outlined">chevron_right</span>
+        </button>
+
+        <div class="main-content-wrapper">
+            <div class="page-content">
+
+                <div id="chamados-page" class="page active">
+                    <div class="kanban-board">
+                        <div class="kanban-column">
+                            <h2><span class="material-icons-outlined">construction</span> Em Atendimento</h2>
+                            <div class="tasks-container" id="in-progress" data-column-id="in-progress"></div>
+                        </div>
+                        <div class="kanban-column">
+                            <h2><span class="material-icons-outlined">support_agent</span> Aguardando Fornecedor</h2>
+                            <div class="tasks-container" id="waiting" data-column-id="waiting"></div>
+                        </div>
+                        <div class="kanban-column">
+                            <h2><span class="material-icons-outlined">event</span> Agendado</h2>
+                            <div class="tasks-container" id="scheduled" data-column-id="scheduled"></div>
+                        </div>
+                        <div class="kanban-column">
+                            <h2><span class="material-icons-outlined">done_all</span> Concluído</h2>
+                            <div class="tasks-container" id="done" data-column-id="done"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="documentacao-page" class="page">
+                    <h2>Documentação</h2>
+                    <p>Página de documentação em construção.</p>
+                </div>
+
+                <div id="repositorio-page" class="page">
+                    <h2>Repositório</h2>
+                    <p>Página de repositório de arquivos em construção.</p>
+                </div>
+
+            </div>
         </div>
     </main>
+
 
     <div id="task-modal" class="modal-overlay">
         <div class="modal-content">
@@ -43,7 +99,6 @@
                 <h3 id="modal-title">Adicionar Novo Chamado</h3>
                 <span class="modal-close" id="modal-close-btn">&times;</span>
             </header>
-
             <form id="task-form">
                 <input type="hidden" id="task-id-input">
                 <div class="form-group">
@@ -66,20 +121,16 @@
                     <label for="task-description-input">Notas de Handoff (O que foi feito / Próximos passos)</label>
                     <textarea id="task-description-input" rows="6" placeholder="Descreva o que foi feito e analisado até o momento, incluíndo por exemplo, o número de um chamado aberto para o NOC!"></textarea>
                 </div>
-            
                 <div class="modal-timestamps">
-                    <div class="timestamp-item" id="modal-created-at">
-                        </div>
-                    <div class="timestamp-item" id="modal-reopened-at">
-                        </div>
+                    <div class="timestamp-item" id="modal-created-at"></div>
+                    <div class="timestamp-item" id="modal-reopened-at"></div>
                 </div>
-
                 <div class="form-actions">
                     <button type="button" id="delete-task-btn" class="btn-danger">Excluir</button>
                     <button type="submit" class="btn-primary">Salvar</button>
                 </div>
-            </form> 
-            </div>
+            </form>
+        </div>
     </div>
 
     <div id="reopen-modal" class="modal-overlay">
@@ -122,7 +173,6 @@
             </div>
         </div>
     </div>
-
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="script.js"></script>

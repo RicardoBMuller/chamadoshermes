@@ -12,7 +12,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Seletores do DOM ---
     const taskContainers = document.querySelectorAll('.tasks-container');
-    const addTaskBtn = document.getElementById('add-task-btn');
+    const addTaskBtn = document.getElementById('add-task-btn'); 
+
+    // Seletores de Navegação, Busca e Sidebar
+    const menuItems = document.querySelectorAll('.menu-item');
+    const pages = document.querySelectorAll('.page');
+    const searchBar = document.getElementById('search-bar');
+    const sidebarToggleBtn = document.getElementById('sidebar-toggle-btn'); 
 
     // --- Seletores do Modal de Tarefa (Modal 1) ---
     const taskModal = document.getElementById('task-modal');
@@ -45,8 +51,51 @@ document.addEventListener('DOMContentLoaded', () => {
     
     let currentEditingCard = null; 
     let cardToReopen = null;       
-    let cardToMove = null;         
+    let cardToMove = null;
+    let draggedCardId = null; // ★★★ NOVO: Variável para guardar o ID do card arrastado ★★★
     
+    
+    // --- LÓGICA DO SIDEBAR ---
+    sidebarToggleBtn.addEventListener('click', () => {
+        // Lógica de expandir/recolher
+        document.body.classList.toggle('sidebar-expanded');
+    });
+
+
+    // --- LÓGICA DE NAVEGAÇÃO ---
+    menuItems.forEach(item => {
+        item.addEventListener('click', (e) => {
+            e.preventDefault();
+            menuItems.forEach(i => i.classList.remove('active'));
+            pages.forEach(p => p.classList.remove('active'));
+            item.classList.add('active');
+            const pageId = item.dataset.page;
+            const targetPage = document.getElementById(pageId + '-page');
+            if (targetPage) {
+                targetPage.classList.add('active');
+            }
+        });
+    });
+
+    // --- LÓGICA DE BUSCA ---
+    searchBar.addEventListener('input', (e) => {
+        const searchTerm = e.target.value.toLowerCase();
+        const allCards = document.querySelectorAll('.task-card');
+
+        allCards.forEach(card => {
+            const title = card.querySelector('h4')?.textContent.toLowerCase() || '';
+            const description = card.querySelector('.task-description')?.textContent.toLowerCase() || '';
+            const analyst = card.querySelector('.task-analyst')?.textContent.toLowerCase() || '';
+            const cardText = title + description + analyst;
+            
+            if (cardText.includes(searchTerm)) {
+                card.classList.remove('hidden');
+            } else {
+                card.classList.add('hidden');
+            }
+        });
+    });
+
     // --- Função de Formatação de Data ---
     const formatFullDate = (dateString) => {
         if (!dateString) return null;
@@ -57,16 +106,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }).format(date);
     };
 
-
     // --- Funções do Modal de TAREFA (Modal 1) ---
     const openModal = (card = null) => {
         currentEditingCard = card; 
-        
         modalCreatedAt.innerHTML = '';
         modalReopenedAt.innerHTML = '';
-
         if (card) {
-            // Modo de Edição
             modalTitle.textContent = 'Editar Chamado';
             taskIdInput.value = card.dataset.taskId; 
             taskTitleInput.value = card.querySelector('h4').textContent;
@@ -74,14 +119,11 @@ document.addEventListener('DOMContentLoaded', () => {
             taskAnalystInput.value = card.querySelector('.task-analyst').textContent;
             taskPriorityInput.value = card.dataset.priority || 'medium';
             deleteTaskBtn.style.display = 'block';
-
             modalCreatedAt.innerHTML = `<span class="material-icons-outlined">calendar_today</span> <span>Criado em: ${formatFullDate(card.dataset.createdAt)}</span>`;
             if (card.dataset.reopenedAt) {
                 modalReopenedAt.innerHTML = `<span class="material-icons-outlined">history</span> <span>Reaberto em: ${formatFullDate(card.dataset.reopenedAt)}</span>`;
             }
-
         } else {
-            // Modo de Criação
             modalTitle.textContent = 'Adicionar Novo Chamado';
             taskForm.reset(); 
             taskIdInput.value = ''; 
@@ -108,20 +150,14 @@ document.addEventListener('DOMContentLoaded', () => {
         cardToReopen = null;
         reopenModalCreatedAt.innerHTML = ''; 
     };
-    // ★★★ LÓGICA MODIFICADA AQUI (handleReopenConfirm) ★★★
     const handleReopenConfirm = async () => {
         if (!cardToReopen) return;
         const taskId = cardToReopen.dataset.taskId;
         const now = new Date().toISOString(); 
-
         const { error } = await supabaseClient
             .from('tasks')
-            .update({ 
-                status: 'in-progress', // MUDANÇA: de 'todo' para 'in-progress'
-                reopened_at: now 
-            })
+            .update({ status: 'in-progress', reopened_at: now })
             .eq('id', taskId);
-        
         if (error) {
             console.error('Erro ao reabrir chamado:', error.message);
             alert('Erro ao reabrir o chamado.');
@@ -130,19 +166,16 @@ document.addEventListener('DOMContentLoaded', () => {
             await loadAllTasks(); 
         }
     };
-    // ★★★ FIM DA MODIFICAÇÃO ★★★
     
     // --- Funções do Modal de CONCLUSÃO (Modal 3) ---
     const openConfirmDoneModal = (card) => {
         cardToMove = card; 
-        
         confirmDoneModalCreatedAt.innerHTML = `<span class="material-icons-outlined">calendar_today</span> <span>Criado em: ${formatFullDate(card.dataset.createdAt)}</span>`;
         if (card.dataset.reopenedAt) {
             confirmDoneModalReopenedAt.innerHTML = `<span class="material-icons-outlined">history</span> <span>Reaberto em: ${formatFullDate(card.dataset.reopenedAt)}</span>`;
         } else {
             confirmDoneModalReopenedAt.innerHTML = '';
         }
-
         confirmDoneModal.classList.add('show');
     };
     const closeConfirmDoneModal = () => {
@@ -150,20 +183,19 @@ document.addEventListener('DOMContentLoaded', () => {
         cardToMove = null;
         confirmDoneModalCreatedAt.innerHTML = '';
         confirmDoneModalReopenedAt.innerHTML = '';
-        loadAllTasks(); 
+        // ★★★ CORREÇÃO: Não recarrega tudo ao cancelar, apenas remove a classe 'dragging' ★★★
+        const draggingCard = document.querySelector('.task-card.dragging');
+        if (draggingCard) {
+            draggingCard.classList.remove('dragging');
+        }
     };
     const handleConfirmDone = async () => {
         if (!cardToMove) return;
         const taskId = cardToMove.dataset.taskId;
-
         const { error } = await supabaseClient
             .from('tasks')
-            .update({ 
-                status: 'done',       
-                reopened_at: null  // Limpa a tag de reabertura
-            })
+            .update({ status: 'done', reopened_at: null })
             .eq('id', taskId);
-        
         if (error) {
             console.error('Erro ao concluir chamado:', error.message);
             alert('Erro ao concluir o chamado.');
@@ -172,31 +204,27 @@ document.addEventListener('DOMContentLoaded', () => {
             cardToMove = null;
             confirmDoneModalCreatedAt.innerHTML = '';
             confirmDoneModalReopenedAt.innerHTML = '';
-            await loadAllTasks(); 
+            await loadAllTasks(); // Recarrega para mostrar o card travado
         }
     };
 
-
-    // --- Função de Criação de Card (Modificada) ---
+    // --- Função de Criação de Card ---
     const createTaskCard = (task) => {
         const card = document.createElement('div');
         card.className = 'task-card';
         card.draggable = true; 
         card.dataset.taskId = task.id; 
         card.dataset.priority = task.priority;
-        card.dataset.createdAt = task.created_at; // Armazena data de criação
+        card.dataset.createdAt = task.created_at;
         if (task.reopened_at) {
-            card.dataset.reopenedAt = task.reopened_at; // Armazena data de reabertura
+            card.dataset.reopenedAt = task.reopened_at;
         }
-        
         const priorityText = task.priority.charAt(0).toUpperCase() + task.priority.slice(1);
-
         const createdDate = new Date(task.created_at);
         const formattedCreatedDate = new Intl.DateTimeFormat('pt-BR', {
             day: '2-digit', month: '2-digit', year: 'numeric',
             hour: '2-digit', minute: '2-digit'
         }).format(createdDate);
-
         let reopenedTagHtml = ''; 
         if (task.reopened_at) {
             reopenedTagHtml = `
@@ -206,7 +234,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
             `;
         }
-        
         card.innerHTML = `
             <h4>${task.title}</h4>
             <p class="task-description">${task.description || ''}</p>
@@ -220,31 +247,25 @@ document.addEventListener('DOMContentLoaded', () => {
                 <span>Criado em: ${formattedCreatedDate}</span>
             </div>
         `;
-        
         if (task.status === 'done') {
             card.classList.add('is-done');
         }
-        
         addCardListeners(card);
         return card;
     };
 
-
     // --- Função Principal: Carregar Tarefas ---
-    // ★★★ LÓGICA MODIFICADA AQUI (loadAllTasks) ★★★
     async function loadAllTasks() {
         taskContainers.forEach(container => container.innerHTML = '');
         const { data: tasks, error } = await supabaseClient
             .from('tasks') 
             .select('*')
             .order('created_at', { ascending: false }); 
-
         if (error) {
             console.error('Erro ao carregar tarefas:', error.message);
             alert('Não foi possível carregar os chamados.');
             return;
         }
-
         tasks.forEach(task => {
             const cardElement = createTaskCard(task);
             const column = document.getElementById(task.status); 
@@ -252,15 +273,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 column.appendChild(cardElement);
             } else {
                 console.warn(`Coluna não encontrada para o status: ${task.status}. Movendo para 'in-progress'.`);
-                // MUDANÇA: Fallback agora é 'in-progress'
                 document.getElementById('in-progress').appendChild(cardElement); 
             }
         });
     }
-    // ★★★ FIM DA MODIFICAÇÃO ★★★
 
     // --- Lógica do Formulário (Salvar/Atualizar) ---
-    // ★★★ LÓGICA MODIFICADA AQUI (taskForm submit) ★★★
     taskForm.addEventListener('submit', async (e) => {
         e.preventDefault(); 
         const taskData = {
@@ -269,25 +287,19 @@ document.addEventListener('DOMContentLoaded', () => {
             analyst: taskAnalystInput.value,
             priority: taskPriorityInput.value,
         };
-
         if (taskDescriptionInput.value === '') taskData.description = null; 
-
         let error;
         if (currentEditingCard) {
-            // Editando card
             const taskId = currentEditingCard.dataset.taskId;
             const { error: updateError } = await supabaseClient
                 .from('tasks').update(taskData).eq('id', taskId); 
             error = updateError;
         } else {
-            // Criando novo card
-            // MUDANÇA: Novo card agora vai para 'in-progress'
             taskData.status = 'in-progress'; 
             const { error: insertError } = await supabaseClient
                 .from('tasks').insert(taskData);
             error = insertError;
         }
-
         if (error) {
             console.error('Erro ao salvar no Supabase:', error.message);
             alert('Erro ao salvar o chamado.');
@@ -296,18 +308,15 @@ document.addEventListener('DOMContentLoaded', () => {
             await loadAllTasks(); 
         }
     });
-    // ★★★ FIM DA MODIFICAÇÃO ★★★
 
     // --- Lógica de Excluir Tarefa ---
     deleteTaskBtn.addEventListener('click', async () => {
         let cardToDelete = currentEditingCard || cardToReopen;
         if (!cardToDelete) return;
-        
         if (confirm('Tem certeza que deseja excluir este chamado PERMANENTEMENTE?')) {
             const taskId = cardToDelete.dataset.taskId;
             const { error } = await supabaseClient
                 .from('tasks').delete().eq('id', taskId); 
-
             if (error) {
                 console.error('Erro ao excluir:', error.message);
                 alert('Erro ao excluir o chamado.');
@@ -319,7 +328,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // --- Lógica de Listeners dos Cards ---
+    // --- ★★★ Lógica de Listeners dos Cards (Drag-and-Drop CORRIGIDA) ★★★ ---
     function addCardListeners(card) {
         card.addEventListener('click', () => {
             if (card.classList.contains('is-done')) {
@@ -329,53 +338,84 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
         
+        // ★★★ CORREÇÃO: Usando dataTransfer ★★★
         card.addEventListener('dragstart', (e) => {
             if (card.classList.contains('is-done')) {
-                e.preventDefault();
+                e.preventDefault(); // Não permite arrastar cards concluídos
                 return false;
             }
-            card.classList.add('dragging');
+            // Guarda o ID do card que está sendo arrastado
+            e.dataTransfer.setData('text/plain', card.dataset.taskId); 
+            // Guarda o ID numa variável global para o 'drop'
+            draggedCardId = card.dataset.taskId; 
+            
+            // Adiciona a classe 'dragging' um pouco depois para evitar bugs visuais
+            setTimeout(() => {
+                card.classList.add('dragging');
+                document.body.classList.add('is-dragging'); // ★★★ Ativa o "modo fantasma" ★★★
+            }, 0);
         });
 
-        card.addEventListener('dragend', () => card.classList.remove('dragging'));
+        card.addEventListener('dragend', () => {
+            card.classList.remove('dragging');
+            draggedCardId = null; // Limpa o ID
+            document.body.classList.remove('is-dragging'); // ★★★ Desativa o "modo fantasma" ★★★
+        });
     }
 
-    // --- Lógica de Drop (Drag-and-Drop) ---
-    taskContainers.forEach(container => {
-        container.addEventListener('dragover', (e) => {
-            e.preventDefault(); 
-            container.classList.add('drag-over'); 
-        });
-
-        container.addEventListener('dragleave', () => container.classList.remove('drag-over'));
-
-        container.addEventListener('drop', async (e) => {
-            e.preventDefault();
-            container.classList.remove('drag-over');
+    // --- Lógica de Drop (Drag-and-Drop CORRIGIDA) ---
+    // ★★★ Listeners agora são nas COLUNAS, não nos containers ★★★
+    document.querySelectorAll('.kanban-column').forEach(column => {
+        
+        column.addEventListener('dragover', (e) => {
+            e.preventDefault(); // Necessário para permitir o drop
             
+            // Apenas mostra o 'drag-over' se o container não for o de origem
             const draggingCard = document.querySelector('.task-card.dragging');
-            if (!draggingCard) return;
+            if (draggingCard && draggingCard.closest('.kanban-column') !== column) {
+                column.classList.add('drag-over'); 
+            }
+        });
+        
+        column.addEventListener('dragleave', () => {
+            column.classList.remove('drag-over');
+        });
+        
+        column.addEventListener('drop', async (e) => {
+            e.preventDefault();
+            column.classList.remove('drag-over');
+            
+            if (!draggedCardId) return; // Se nenhum card estiver sendo arrastado, sai
+            
+            const draggingCard = document.querySelector(`.task-card[data-task-id="${draggedCardId}"]`);
+            if (!draggingCard) return; // Se não encontrar o card, sai
+            
+            const taskId = draggedCardId;
+            const tasksContainer = column.querySelector('.tasks-container'); // Encontra o container *dentro* da coluna
+            
+            if (!tasksContainer) return; // Se não houver container, não faz nada
+            
+            const newStatus = tasksContainer.id; // O ID está no container
+            const oldContainer = draggingCard.closest('.tasks-container');
+            
+            if (oldContainer.id === newStatus) {
+                return; // Soltou na mesma coluna
+            }
 
-            const taskId = draggingCard.dataset.taskId;
-            const newStatus = container.id;
-            const oldStatus = draggingCard.closest('.tasks-container').id;
-
-            if (newStatus === oldStatus) return;
-
+            // Se for para "Concluído", abre o modal
             if (newStatus === 'done') {
-                e.preventDefault(); 
                 openConfirmDoneModal(draggingCard);
                 return; 
             }
 
-            // Lógica para TODAS AS OUTRAS colunas
-            container.appendChild(draggingCard);
+            // Se for para qualquer outra coluna
+            tasksContainer.appendChild(draggingCard); // Move o card no DOM
             draggingCard.classList.remove('is-done'); 
-
-            // A tag de reabertura persiste
+            
+            // ★★★ CORREÇÃO DO BUG: Atualiza APENAS o status ★★★
             const { error } = await supabaseClient
                 .from('tasks')
-                .update({ status: newStatus })
+                .update({ status: newStatus }) // Não mexe no 'reopened_at'
                 .eq('id', taskId);
 
             if (error) {
@@ -383,8 +423,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 alert('Erro ao mover o card. A página será recarregada.');
                 await loadAllTasks();
             }
+            // A tag de reabertura persiste
         });
     });
+    // ★★★ FIM DAS CORREÇÕES DE DRAG-AND-DROP ★★★
 
     // --- Event Listeners dos Modais ---
     // Modal 1
@@ -393,7 +435,6 @@ document.addEventListener('DOMContentLoaded', () => {
     taskModal.addEventListener('click', (e) => {
         if (e.target === taskModal) closeModal();
     });
-
     // Modal 2
     reopenConfirmBtn.addEventListener('click', handleReopenConfirm);
     reopenCancelBtn.addEventListener('click', closeReopenModal);
@@ -401,7 +442,6 @@ document.addEventListener('DOMContentLoaded', () => {
     reopenModal.addEventListener('click', (e) => {
         if (e.target === reopenModal) closeReopenModal();
     });
-
     // Modal 3
     confirmDoneConfirmBtn.addEventListener('click', handleConfirmDone);
     confirmDoneCancelBtn.addEventListener('click', closeConfirmDoneModal);
