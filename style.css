@@ -30,6 +30,12 @@
     from { opacity: 0; transform: translateY(15px); }
     to { opacity: 1; transform: translateY(0); }
 }
+/* ★★★ NOVA ANIMAÇÃO DE FADE IN DA PÁGINA ★★★ */
+@keyframes fadeInPage {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
 
 * {
     margin: 0;
@@ -279,7 +285,11 @@ body.sidebar-expanded .sidebar-toggle .material-icons-outlined {
     padding: 25px;
 }
 .page { display: none; }
-.page.active { display: block; }
+.page.active { 
+    display: block; 
+    /* ★★★ ANIMAÇÃO DE FADE IN DA PÁGINA ★★★ */
+    animation: fadeInPage 0.3s ease-out;
+}
 .page-header {
     display: flex;
     justify-content: space-between;
@@ -317,7 +327,7 @@ body.sidebar-expanded .sidebar-toggle .material-icons-outlined {
 .task-reopened-tag .material-icons-outlined { font-size: 0.9rem; }
 
 
-/* --- ★★★ NOVOS ESTILOS: Página de Documentação ★★★ --- */
+/* --- Estilos da Página de Documentação --- */
 .doc-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -329,29 +339,27 @@ body.sidebar-expanded .sidebar-toggle .material-icons-outlined {
     border: 1px solid var(--color-border);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
     cursor: pointer;
-    overflow: hidden; /* Garante que a imagem não vaze */
-    display: flex; /* Permite que o conteúdo empurre para baixo */
+    overflow: hidden; 
+    display: flex; 
     flex-direction: column;
+    /* ★★★ ANIMAÇÃO DE FADE IN DO CARD ★★★ */
+    animation: cardFadeIn 0.4s ease-out;
 }
 .doc-card:hover {
     transform: translateY(-5px);
     box-shadow: var(--shadow-medium);
 }
-
-/* ★★★ NOVO: Thumbnail da Imagem ★★★ */
 .doc-card-thumbnail {
     width: 100%;
-    aspect-ratio: 16 / 9; /* Proporção de tela */
+    aspect-ratio: 16 / 9; 
     background-color: var(--color-bg-primary);
     overflow: hidden;
 }
 .doc-card-thumbnail img {
     width: 100%;
     height: 100%;
-    object-fit: cover; /* Garante que a imagem cubra a área */
+    object-fit: cover; 
 }
-
-/* ★★★ NOVO: Placeholder (se não houver imagem) ★★★ */
 .doc-card-placeholder {
     width: 100%;
     aspect-ratio: 16 / 9;
@@ -365,11 +373,9 @@ body.sidebar-expanded .sidebar-toggle .material-icons-outlined {
     font-size: 4rem;
     opacity: 0.5;
 }
-
-/* Conteúdo de texto do card de documento */
 .doc-card-content {
     padding: 20px;
-    flex-grow: 1; /* Ocupa o espaço restante */
+    flex-grow: 1; 
 }
 .doc-card-content h4 {
     color: var(--color-text-primary);
@@ -383,11 +389,11 @@ body.sidebar-expanded .sidebar-toggle .material-icons-outlined {
     -webkit-box-orient: vertical;
     overflow: hidden;
     text-overflow: ellipsis;
-    margin-bottom: 0; /* Remove margem padrão */
+    margin-bottom: 0; 
 }
 
 
-/* --- Estilos do Editor de Documentação (Tela Cheia) --- */
+/* --- ★★★ ESTILOS DO EDITOR DE DOCUMENTAÇÃO (MODIFICADO) ★★★ --- */
 .doc-editor-overlay {
     position: fixed;
     top: 0;
@@ -397,13 +403,19 @@ body.sidebar-expanded .sidebar-toggle .material-icons-outlined {
     background-color: rgba(0, 0, 0, 0.8);
     backdrop-filter: blur(10px);
     z-index: 2000;
-    display: none; 
+    
+    /* ★★★ Lógica de Fade In/Out ★★★ */
+    display: flex; /* Mudado de block para flex */
+    justify-content: center;
+    align-items: center;
+    visibility: hidden; 
     opacity: 0;
-    transition: opacity 0.3s ease;
+    transition: opacity 0.3s ease, visibility 0s 0.3s;
 }
 .doc-editor-overlay.show {
-    display: block;
+    visibility: visible;
     opacity: 1;
+    transition-delay: 0s;
 }
 .doc-editor-content {
     display: flex;
@@ -414,7 +426,18 @@ body.sidebar-expanded .sidebar-toggle .material-icons-outlined {
     max-width: 900px;
     margin: 0 auto;
     padding: 0 20px 20px 20px;
+    
+    /* ★★★ Lógica de Slide-in ★★★ */
+    transform: translateY(-30px);
+    opacity: 0;
+    transition: transform 0.3s ease-out, opacity 0.3s ease-out;
 }
+.doc-editor-overlay.show .doc-editor-content {
+    transform: translateY(0);
+    opacity: 1;
+}
+/* ★★★ FIM DA MODIFICAÇÃO ★★★ */
+
 .doc-editor-header {
     display: flex;
     justify-content: space-between;
@@ -456,8 +479,7 @@ body.sidebar-expanded .sidebar-toggle .material-icons-outlined {
     flex-shrink: 0;
 }
 
-
-/* --- CORREÇÃO DO SCROLL DO EDITOR --- */
+/* Scroll do Editor */
 #quill-editor-container {
     flex-grow: 1; 
     overflow: hidden; 
@@ -495,10 +517,7 @@ body.sidebar-expanded .sidebar-toggle .material-icons-outlined {
     height: 100%; 
     padding: 12px;
 }
-/* --- FIM DA CORREÇÃO DO SCROLL --- */
-
-
-/* --- Tema Escuro do Quill.js --- */
+/* Tema Escuro do Quill.js */
 .ql-toolbar .ql-stroke, .ql-toolbar .ql-fill {
     stroke: var(--color-text-secondary) !important;
     fill: var(--color-text-secondary) !important;
@@ -546,7 +565,6 @@ body.sidebar-expanded .sidebar-toggle .material-icons-outlined {
     transform: translateY(0);
     box-shadow: none;
 }
-
 .btn-danger {
     background-color: transparent;
     color: var(--color-accent);
