@@ -30,7 +30,6 @@
     from { opacity: 0; transform: translateY(15px); }
     to { opacity: 1; transform: translateY(0); }
 }
-/* ★★★ NOVA ANIMAÇÃO DE FADE IN DA PÁGINA ★★★ */
 @keyframes fadeInPage {
     from { opacity: 0; }
     to { opacity: 1; }
@@ -287,7 +286,6 @@ body.sidebar-expanded .sidebar-toggle .material-icons-outlined {
 .page { display: none; }
 .page.active { 
     display: block; 
-    /* ★★★ ANIMAÇÃO DE FADE IN DA PÁGINA ★★★ */
     animation: fadeInPage 0.3s ease-out;
 }
 .page-header {
@@ -342,7 +340,6 @@ body.sidebar-expanded .sidebar-toggle .material-icons-outlined {
     overflow: hidden; 
     display: flex; 
     flex-direction: column;
-    /* ★★★ ANIMAÇÃO DE FADE IN DO CARD ★★★ */
     animation: cardFadeIn 0.4s ease-out;
 }
 .doc-card:hover {
@@ -393,7 +390,7 @@ body.sidebar-expanded .sidebar-toggle .material-icons-outlined {
 }
 
 
-/* --- ★★★ ESTILOS DO EDITOR DE DOCUMENTAÇÃO (MODIFICADO) ★★★ --- */
+/* --- Estilos do Editor de Documentação (Tela Cheia) --- */
 .doc-editor-overlay {
     position: fixed;
     top: 0;
@@ -403,9 +400,7 @@ body.sidebar-expanded .sidebar-toggle .material-icons-outlined {
     background-color: rgba(0, 0, 0, 0.8);
     backdrop-filter: blur(10px);
     z-index: 2000;
-    
-    /* ★★★ Lógica de Fade In/Out ★★★ */
-    display: flex; /* Mudado de block para flex */
+    display: flex; 
     justify-content: center;
     align-items: center;
     visibility: hidden; 
@@ -426,8 +421,6 @@ body.sidebar-expanded .sidebar-toggle .material-icons-outlined {
     max-width: 900px;
     margin: 0 auto;
     padding: 0 20px 20px 20px;
-    
-    /* ★★★ Lógica de Slide-in ★★★ */
     transform: translateY(-30px);
     opacity: 0;
     transition: transform 0.3s ease-out, opacity 0.3s ease-out;
@@ -436,8 +429,6 @@ body.sidebar-expanded .sidebar-toggle .material-icons-outlined {
     transform: translateY(0);
     opacity: 1;
 }
-/* ★★★ FIM DA MODIFICAÇÃO ★★★ */
-
 .doc-editor-header {
     display: flex;
     justify-content: space-between;
@@ -537,6 +528,50 @@ body.sidebar-expanded .sidebar-toggle .material-icons-outlined {
 .ql-toolbar .ql-picker-label {
     color: var(--color-text-secondary) !important;
 }
+
+/* ★★★ NOVOS ESTILOS: Fontes e Cores do Quill ★★★ */
+.ql-font-roboto { font-family: 'Roboto', sans-serif; }
+.ql-font-lato { font-family: 'Lato', sans-serif; }
+.ql-font-montserrat { font-family: 'Montserrat', sans-serif; }
+.ql-font-sans-serif { font-family: sans-serif; }
+
+.ql-toolbar .ql-font .ql-picker-label[data-value="roboto"]::before,
+.ql-toolbar .ql-font .ql-picker-item[data-value="roboto"]::before {
+    content: 'Roboto';
+    font-family: 'Roboto', sans-serif;
+}
+.ql-toolbar .ql-font .ql-picker-label[data-value="lato"]::before,
+.ql-toolbar .ql-font .ql-picker-item[data-value="lato"]::before {
+    content: 'Lato';
+    font-family: 'Lato', sans-serif;
+}
+.ql-toolbar .ql-font .ql-picker-label[data-value="montserrat"]::before,
+.ql-toolbar .ql-font .ql-picker-item[data-value="montserrat"]::before {
+    content: 'Montserrat';
+    font-family: 'Montserrat', sans-serif;
+}
+.ql-toolbar .ql-font .ql-picker-label[data-value="sans-serif"]::before,
+.ql-toolbar .ql-font .ql-picker-item[data-value="sans-serif"]::before {
+    content: 'Padrão';
+    font-family: sans-serif;
+}
+
+.ql-toolbar .ql-color-picker .ql-picker-label,
+.ql-toolbar .ql-icon-picker .ql-picker-label {
+    color: var(--color-text-secondary) !important;
+}
+.ql-toolbar .ql-color-picker .ql-picker-options,
+.ql-toolbar .ql-icon-picker .ql-picker-options {
+    background-color: var(--color-bg-header); /* Fundo do dropdown */
+    border: 1px solid var(--color-border) !important;
+    border-radius: var(--border-radius);
+    padding: 5px;
+}
+.ql-toolbar .ql-color-picker .ql-picker-item {
+    border-radius: 4px;
+    border: 1px solid var(--color-border);
+}
+/* ★★★ FIM DOS NOVOS ESTILOS QUILL ★★★ */
 
 
 /* --- Estilos de Botões (CORRIGIDO) --- */

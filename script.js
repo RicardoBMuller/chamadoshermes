@@ -272,20 +272,77 @@ document.addEventListener('DOMContentLoaded', () => {
 
     
     // --- 6. FUNÇÕES DE DADOS (DOCUMENTAÇÃO) ---
+    
+    // ★★★ CORREÇÃO: Função para adicionar tooltips em Português ★★★
+    function addQuillTooltips() {
+        // Mapeamento dos seletores para os títulos
+        const tooltips = {
+            '.ql-bold': 'Negrito (Ctrl+B)',
+            '.ql-italic': 'Itálico (Ctrl+I)',
+            '.ql-underline': 'Sublinhado (Ctrl+U)',
+            '.ql-strike': 'Tachado',
+            '.ql-header[value="1"]': 'Título 1',
+            '.ql-header[value="2"]': 'Título 2',
+            '.ql-header[value="3"]': 'Título 3',
+            '.ql-list[value="ordered"]': 'Lista Ordenada',
+            '.ql-list[value="bullet"]': 'Lista com Marcadores',
+            '.ql-link': 'Inserir Link',
+            '.ql-image': 'Inserir Imagem',
+            '.ql-code-block': 'Bloco de Código',
+            '.ql-clean': 'Remover Formatação',
+            '.ql-font': 'Tipo de Fonte',
+            '.ql-color': 'Cor da Fonte',
+            '.ql-background': 'Cor de Fundo'
+        };
+
+        // Aplica os títulos
+        for (const selector in tooltips) {
+            const el = document.querySelector(`.ql-toolbar ${selector}`);
+            if (el) {
+                el.title = tooltips[selector];
+            }
+        }
+        
+        // Trata os dropdowns de forma especial (eles não são botões)
+        const headerPicker = document.querySelector('.ql-toolbar .ql-header .ql-picker-label');
+        if(headerPicker) headerPicker.title = "Tipo de Cabeçalho";
+        
+        const fontPicker = document.querySelector('.ql-toolbar .ql-font .ql-picker-label');
+        if(fontPicker) fontPicker.title = "Tipo de Fonte";
+
+        const colorPicker = document.querySelector('.ql-toolbar .ql-color .ql-picker-label');
+        if(colorPicker) colorPicker.title = "Cor da Fonte";
+
+        const backgroundPicker = document.querySelector('.ql-toolbar .ql-background .ql-picker-label');
+        if(backgroundPicker) backgroundPicker.title = "Cor de Fundo";
+    }
+
     function initializeQuill() {
         if (!quill) {
+            const Font = Quill.import('formats/font');
+            const fontWhitelist = ['sans-serif', 'roboto', 'lato', 'montserrat'];
+            Font.whitelist = fontWhitelist;
+            Quill.register(Font, true);
+
+            const toolbarOptions = [
+                [{ 'header': [1, 2, 3, false] }],
+                [{ 'font': fontWhitelist }], 
+                ['bold', 'italic', 'underline', 'strike'],
+                [{ 'color': [] }, { 'background': [] }], 
+                [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                ['link', 'image', 'code-block'],
+                ['clean']
+            ];
+
             quill = new Quill('#quill-editor', {
                 modules: {
-                    toolbar: [
-                        [{ 'header': [1, 2, 3, false] }],
-                        ['bold', 'italic', 'underline', 'strike'],
-                        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-                        ['link', 'image', 'code-block'],
-                        ['clean']
-                    ]
+                    toolbar: toolbarOptions
                 },
                 theme: 'snow'
             });
+            
+            // ★★★ CHAMA A FUNÇÃO DE TOOLTIPS AQUI ★★★
+            addQuillTooltips();
         }
     }
 
@@ -619,7 +676,6 @@ document.addEventListener('DOMContentLoaded', () => {
     docSaveBtn.addEventListener('click', saveDocument);
     docCloseBtn.addEventListener('click', closeDocumentEditor);
     docDeleteBtn.addEventListener('click', deleteDocument);
-    // ★★★ CORREÇÃO ADICIONADA: Fechar modal ao clicar fora ★★★
     docEditorOverlay.addEventListener('click', (e) => {
         if (e.target === docEditorOverlay) {
             closeDocumentEditor();
