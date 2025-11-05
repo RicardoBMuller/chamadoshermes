@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- 1. SELETORES DO DOM ---
     const taskContainers = document.querySelectorAll('.tasks-container');
     const addTaskBtn = document.getElementById('add-task-btn'); 
-    const kanbanColumns = document.querySelectorAll('.kanban-column'); // ★★★ USADO P/ DRAG ★★★
+    const kanbanColumns = document.querySelectorAll('.kanban-column'); 
 
     // Navegação, Busca e Sidebar
     const menuItems = document.querySelectorAll('.menu-item');
@@ -311,38 +311,32 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // ★★★ LÓGICA DA THUMBNAIL ADICIONADA AQUI ★★★
     function createDocumentCard(doc) {
         const card = document.createElement('div');
         card.className = 'doc-card';
         card.dataset.docId = doc.id;
         card.dataset.title = doc.title;
         card.dataset.description = doc.description;
-        // Salva o conteúdo completo para o editor
         card.dataset.content = btoa(unescape(encodeURIComponent(doc.content))); 
 
-        // --- Lógica para encontrar a primeira imagem ---
         let thumbnailHtml = '';
         const parser = new DOMParser();
         const htmlDoc = parser.parseFromString(doc.content, 'text/html');
         const firstImage = htmlDoc.querySelector('img');
         
         if (firstImage && firstImage.src) {
-            // Se encontrar uma imagem (Base64)
             thumbnailHtml = `
                 <div class="doc-card-thumbnail">
                     <img src="${firstImage.src}" alt="Preview">
                 </div>
             `;
         } else {
-            // Placeholder se não houver imagem
             thumbnailHtml = `
                 <div class="doc-card-placeholder">
                     <span class="material-icons-outlined">article</span>
                 </div>
             `;
         }
-        // --- Fim da lógica da thumbnail ---
 
         card.innerHTML = `
             ${thumbnailHtml}
@@ -625,6 +619,12 @@ document.addEventListener('DOMContentLoaded', () => {
     docSaveBtn.addEventListener('click', saveDocument);
     docCloseBtn.addEventListener('click', closeDocumentEditor);
     docDeleteBtn.addEventListener('click', deleteDocument);
+    // ★★★ CORREÇÃO ADICIONADA: Fechar modal ao clicar fora ★★★
+    docEditorOverlay.addEventListener('click', (e) => {
+        if (e.target === docEditorOverlay) {
+            closeDocumentEditor();
+        }
+    });
 
 
     // --- 8. CARGA INICIAL ---
