@@ -10,17 +10,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 
-    // --- Seletores do DOM ---
+    // --- 1. SELETORES DO DOM ---
     const taskContainers = document.querySelectorAll('.tasks-container');
     const addTaskBtn = document.getElementById('add-task-btn'); 
+    const kanbanColumns = document.querySelectorAll('.kanban-column'); // ★★★ USADO P/ DRAG ★★★
 
-    // Seletores de Navegação, Busca e Sidebar
+    // Navegação, Busca e Sidebar
     const menuItems = document.querySelectorAll('.menu-item');
     const pages = document.querySelectorAll('.page');
     const searchBar = document.getElementById('search-bar');
     const sidebarToggleBtn = document.getElementById('sidebar-toggle-btn'); 
 
-    // --- Seletores do Modal de Tarefa (Modal 1) ---
+    // Modal de Tarefa (Modal 1)
     const taskModal = document.getElementById('task-modal');
     const modalCloseBtn = document.getElementById('modal-close-btn');
     const taskForm = document.getElementById('task-form');
@@ -34,14 +35,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalCreatedAt = document.getElementById('modal-created-at');
     const modalReopenedAt = document.getElementById('modal-reopened-at');
 
-    // --- Seletores do Modal de Reabertura (Modal 2) ---
+    // Modal de Reabertura (Modal 2)
     const reopenModal = document.getElementById('reopen-modal');
     const reopenModalCloseBtn = document.getElementById('reopen-modal-close-btn');
     const reopenConfirmBtn = document.getElementById('reopen-confirm-btn');
     const reopenCancelBtn = document.getElementById('reopen-cancel-btn');
     const reopenModalCreatedAt = document.getElementById('reopen-modal-created-at');
 
-    // --- Seletores do Modal de Conclusão (Modal 3) ---
+    // Modal de Conclusão (Modal 3)
     const confirmDoneModal = document.getElementById('confirm-done-modal');
     const confirmDoneModalCloseBtn = document.getElementById('confirm-done-modal-close-btn');
     const confirmDoneConfirmBtn = document.getElementById('confirm-done-confirm-btn');
@@ -49,54 +50,26 @@ document.addEventListener('DOMContentLoaded', () => {
     const confirmDoneModalCreatedAt = document.getElementById('confirm-done-modal-created-at');
     const confirmDoneModalReopenedAt = document.getElementById('confirm-done-modal-reopened-at');
     
+    // Seletores de Documentação (Modal 4)
+    const addDocumentBtn = document.getElementById('add-document-btn');
+    const docGrid = document.getElementById('doc-grid');
+    const docEditorOverlay = document.getElementById('doc-editor-overlay');
+    const docIdInput = document.getElementById('doc-id-input');
+    const docTitleInput = document.getElementById('doc-title-input');
+    const docDescriptionInput = document.getElementById('doc-description-input');
+    const docSaveBtn = document.getElementById('doc-save-btn');
+    const docCloseBtn = document.getElementById('doc-close-btn');
+    const docDeleteBtn = document.getElementById('doc-delete-btn');
+    
+    // --- 2. VARIÁVEIS DE ESTADO ---
     let currentEditingCard = null; 
     let cardToReopen = null;       
     let cardToMove = null;
-    let draggedCardId = null; // ★★★ NOVO: Variável para guardar o ID do card arrastado ★★★
+    let draggedCardId = null; 
+    let quill = null; // Editor de texto
     
     
-    // --- LÓGICA DO SIDEBAR ---
-    sidebarToggleBtn.addEventListener('click', () => {
-        // Lógica de expandir/recolher
-        document.body.classList.toggle('sidebar-expanded');
-    });
-
-
-    // --- LÓGICA DE NAVEGAÇÃO ---
-    menuItems.forEach(item => {
-        item.addEventListener('click', (e) => {
-            e.preventDefault();
-            menuItems.forEach(i => i.classList.remove('active'));
-            pages.forEach(p => p.classList.remove('active'));
-            item.classList.add('active');
-            const pageId = item.dataset.page;
-            const targetPage = document.getElementById(pageId + '-page');
-            if (targetPage) {
-                targetPage.classList.add('active');
-            }
-        });
-    });
-
-    // --- LÓGICA DE BUSCA ---
-    searchBar.addEventListener('input', (e) => {
-        const searchTerm = e.target.value.toLowerCase();
-        const allCards = document.querySelectorAll('.task-card');
-
-        allCards.forEach(card => {
-            const title = card.querySelector('h4')?.textContent.toLowerCase() || '';
-            const description = card.querySelector('.task-description')?.textContent.toLowerCase() || '';
-            const analyst = card.querySelector('.task-analyst')?.textContent.toLowerCase() || '';
-            const cardText = title + description + analyst;
-            
-            if (cardText.includes(searchTerm)) {
-                card.classList.remove('hidden');
-            } else {
-                card.classList.add('hidden');
-            }
-        });
-    });
-
-    // --- Função de Formatação de Data ---
+    // --- 3. FUNÇÕES DE FORMATAÇÃO E UTILIDADE ---
     const formatFullDate = (dateString) => {
         if (!dateString) return null;
         const date = new Date(dateString);
@@ -106,7 +79,29 @@ document.addEventListener('DOMContentLoaded', () => {
         }).format(date);
     };
 
-    // --- Funções do Modal de TAREFA (Modal 1) ---
+    function filterKanbanCards(searchTerm) {
+        const allCards = document.querySelectorAll('.task-card');
+        allCards.forEach(card => {
+            const title = card.querySelector('h4')?.textContent.toLowerCase() || '';
+            const description = card.querySelector('.task-description')?.textContent.toLowerCase() || '';
+            const analyst = card.querySelector('.task-analyst')?.textContent.toLowerCase() || '';
+            const cardText = title + description + analyst;
+            card.classList.toggle('hidden', !cardText.includes(searchTerm));
+        });
+    }
+
+    function filterDocCards(searchTerm) {
+        const allDocCards = document.querySelectorAll('.doc-card');
+        allDocCards.forEach(card => {
+            const title = card.querySelector('h4')?.textContent.toLowerCase() || '';
+            const description = card.querySelector('p')?.textContent.toLowerCase() || '';
+            const cardText = title + description;
+            card.classList.toggle('hidden', !cardText.includes(searchTerm));
+        });
+    }
+
+
+    // --- 4. FUNÇÕES DE MODAIS (KANBAN) ---
     const openModal = (card = null) => {
         currentEditingCard = card; 
         modalCreatedAt.innerHTML = '';
@@ -139,7 +134,6 @@ document.addEventListener('DOMContentLoaded', () => {
         modalReopenedAt.innerHTML = '';
     };
 
-    // --- Funções do Modal de REABERTURA (Modal 2) ---
     const openReopenModal = (card) => {
         cardToReopen = card; 
         reopenModalCreatedAt.innerHTML = `<span class="material-icons-outlined">calendar_today</span> <span>Criado em: ${formatFullDate(card.dataset.createdAt)}</span>`;
@@ -167,7 +161,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
     
-    // --- Funções do Modal de CONCLUSÃO (Modal 3) ---
     const openConfirmDoneModal = (card) => {
         cardToMove = card; 
         confirmDoneModalCreatedAt.innerHTML = `<span class="material-icons-outlined">calendar_today</span> <span>Criado em: ${formatFullDate(card.dataset.createdAt)}</span>`;
@@ -183,7 +176,6 @@ document.addEventListener('DOMContentLoaded', () => {
         cardToMove = null;
         confirmDoneModalCreatedAt.innerHTML = '';
         confirmDoneModalReopenedAt.innerHTML = '';
-        // ★★★ CORREÇÃO: Não recarrega tudo ao cancelar, apenas remove a classe 'dragging' ★★★
         const draggingCard = document.querySelector('.task-card.dragging');
         if (draggingCard) {
             draggingCard.classList.remove('dragging');
@@ -204,11 +196,12 @@ document.addEventListener('DOMContentLoaded', () => {
             cardToMove = null;
             confirmDoneModalCreatedAt.innerHTML = '';
             confirmDoneModalReopenedAt.innerHTML = '';
-            await loadAllTasks(); // Recarrega para mostrar o card travado
+            await loadAllTasks(); 
         }
     };
 
-    // --- Função de Criação de Card ---
+
+    // --- 5. FUNÇÕES DE DADOS (KANBAN) ---
     const createTaskCard = (task) => {
         const card = document.createElement('div');
         card.className = 'task-card';
@@ -254,7 +247,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return card;
     };
 
-    // --- Função Principal: Carregar Tarefas ---
     async function loadAllTasks() {
         taskContainers.forEach(container => container.innerHTML = '');
         const { data: tasks, error } = await supabaseClient
@@ -278,7 +270,297 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- Lógica do Formulário (Salvar/Atualizar) ---
+    
+    // --- 6. FUNÇÕES DE DADOS (DOCUMENTAÇÃO) ---
+    function initializeQuill() {
+        if (!quill) {
+            quill = new Quill('#quill-editor', {
+                modules: {
+                    toolbar: [
+                        [{ 'header': [1, 2, 3, false] }],
+                        ['bold', 'italic', 'underline', 'strike'],
+                        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                        ['link', 'image', 'code-block'],
+                        ['clean']
+                    ]
+                },
+                theme: 'snow'
+            });
+        }
+    }
+
+    async function loadAllDocuments() {
+        docGrid.innerHTML = 'Carregando documentos...';
+        const { data, error } = await supabaseClient
+            .from('documentation')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            console.error('Erro ao carregar documentos:', error.message);
+            docGrid.innerHTML = 'Erro ao carregar documentos.';
+            return;
+        }
+        if (data.length === 0) {
+            docGrid.innerHTML = 'Nenhum documento encontrado. Clique em "Novo Documento" para criar um.';
+            return;
+        }
+        docGrid.innerHTML = '';
+        data.forEach(doc => {
+            docGrid.appendChild(createDocumentCard(doc));
+        });
+    }
+
+    // ★★★ LÓGICA DA THUMBNAIL ADICIONADA AQUI ★★★
+    function createDocumentCard(doc) {
+        const card = document.createElement('div');
+        card.className = 'doc-card';
+        card.dataset.docId = doc.id;
+        card.dataset.title = doc.title;
+        card.dataset.description = doc.description;
+        // Salva o conteúdo completo para o editor
+        card.dataset.content = btoa(unescape(encodeURIComponent(doc.content))); 
+
+        // --- Lógica para encontrar a primeira imagem ---
+        let thumbnailHtml = '';
+        const parser = new DOMParser();
+        const htmlDoc = parser.parseFromString(doc.content, 'text/html');
+        const firstImage = htmlDoc.querySelector('img');
+        
+        if (firstImage && firstImage.src) {
+            // Se encontrar uma imagem (Base64)
+            thumbnailHtml = `
+                <div class="doc-card-thumbnail">
+                    <img src="${firstImage.src}" alt="Preview">
+                </div>
+            `;
+        } else {
+            // Placeholder se não houver imagem
+            thumbnailHtml = `
+                <div class="doc-card-placeholder">
+                    <span class="material-icons-outlined">article</span>
+                </div>
+            `;
+        }
+        // --- Fim da lógica da thumbnail ---
+
+        card.innerHTML = `
+            ${thumbnailHtml}
+            <div class="doc-card-content">
+                <h4>${doc.title}</h4>
+                <p>${doc.description || 'Sem descrição'}</p>
+            </div>
+        `;
+        
+        card.addEventListener('click', () => {
+            const docData = {
+                id: card.dataset.docId,
+                title: card.dataset.title,
+                description: card.dataset.description,
+                content: decodeURIComponent(escape(atob(card.dataset.content)))
+            };
+            openDocumentEditor(docData);
+        });
+        
+        return card;
+    }
+
+    function openDocumentEditor(doc = null) {
+        initializeQuill();
+        if (doc) {
+            docIdInput.value = doc.id;
+            docTitleInput.value = doc.title;
+            docDescriptionInput.value = doc.description;
+            quill.root.innerHTML = doc.content; 
+            docDeleteBtn.style.display = 'flex'; 
+        } else {
+            docIdInput.value = ''; 
+            docTitleInput.value = '';
+            docDescriptionInput.value = '';
+            quill.root.innerHTML = ''; 
+            docDeleteBtn.style.display = 'none'; 
+        }
+        docEditorOverlay.classList.add('show');
+    }
+
+    function closeDocumentEditor() {
+        docEditorOverlay.classList.remove('show');
+    }
+
+    async function saveDocument() {
+        const id = docIdInput.value || undefined; 
+        const title = docTitleInput.value;
+        const description = docDescriptionInput.value;
+        const content = quill.root.innerHTML; 
+
+        if (!title) {
+            alert('Por favor, insira um título.');
+            return;
+        }
+
+        const { error } = await supabaseClient
+            .from('documentation')
+            .upsert({
+                id: id,
+                title: title,
+                description: description,
+                content: content,
+                updated_at: new Date().toISOString() 
+            });
+
+        if (error) {
+            console.error('Erro ao salvar documento:', error.message);
+            alert('Erro ao salvar o documento.');
+        } else {
+            closeDocumentEditor();
+            loadAllDocuments(); 
+        }
+    }
+
+    async function deleteDocument() {
+        const id = docIdInput.value;
+        if (!id) return;
+        
+        if (confirm('Tem certeza que deseja excluir este documento permanentemente?')) {
+            const { error } = await supabaseClient
+                .from('documentation')
+                .delete()
+                .eq('id', id);
+
+            if (error) {
+                console.error('Erro ao excluir documento:', error.message);
+                alert('Erro ao excluir o documento.');
+            } else {
+                closeDocumentEditor();
+                loadAllDocuments();
+            }
+        }
+    }
+
+
+    // --- 7. EVENT LISTENERS ---
+
+    // Sidebar e Navegação
+    sidebarToggleBtn.addEventListener('click', () => {
+        document.body.classList.toggle('sidebar-expanded');
+    });
+
+    menuItems.forEach(item => {
+        item.addEventListener('click', (e) => {
+            e.preventDefault();
+            menuItems.forEach(i => i.classList.remove('active'));
+            pages.forEach(p => p.classList.remove('active'));
+            item.classList.add('active');
+            const pageId = item.dataset.page;
+            const targetPage = document.getElementById(pageId + '-page');
+            if (targetPage) {
+                targetPage.classList.add('active');
+            }
+            if (pageId === 'documentacao') {
+                loadAllDocuments();
+            }
+        });
+    });
+
+    searchBar.addEventListener('input', (e) => {
+        const searchTerm = e.target.value.toLowerCase();
+        const activePage = document.querySelector('.page.active').id;
+        if (activePage === 'chamados-page') {
+            filterKanbanCards(searchTerm);
+        } else if (activePage === 'documentacao-page') {
+            filterDocCards(searchTerm);
+        }
+    });
+
+    // Listeners do Drag-and-Drop (Kanban)
+    function addCardListeners(card) {
+        card.addEventListener('click', () => {
+            if (card.classList.contains('is-done')) {
+                openReopenModal(card);
+            } else {
+                openModal(card);
+            }
+        });
+        
+        card.addEventListener('dragstart', (e) => {
+            if (card.classList.contains('is-done')) {
+                e.preventDefault();
+                return false;
+            }
+            e.dataTransfer.setData('text/plain', card.dataset.taskId); 
+            draggedCardId = card.dataset.taskId; 
+            
+            setTimeout(() => {
+                card.classList.add('dragging');
+                document.body.classList.add('is-dragging'); 
+            }, 0);
+        });
+
+        card.addEventListener('dragend', () => {
+            card.classList.remove('dragging');
+            draggedCardId = null; 
+            document.body.classList.remove('is-dragging'); 
+        });
+    }
+
+    kanbanColumns.forEach(column => {
+        
+        column.addEventListener('dragover', (e) => {
+            e.preventDefault(); 
+            const draggingCard = document.querySelector('.task-card.dragging');
+            if (draggingCard && draggingCard.closest('.kanban-column') !== column) {
+                column.classList.add('drag-over'); 
+            }
+        });
+        
+        column.addEventListener('dragleave', () => {
+            column.classList.remove('drag-over');
+        });
+        
+        column.addEventListener('drop', async (e) => {
+            e.preventDefault();
+            column.classList.remove('drag-over');
+            
+            if (!draggedCardId) return; 
+            const draggingCard = document.querySelector(`.task-card[data-task-id="${draggedCardId}"]`);
+            if (!draggingCard) return; 
+            
+            const taskId = draggedCardId;
+            const tasksContainer = column.querySelector('.tasks-container');
+            if (!tasksContainer) return; 
+            
+            const newStatus = tasksContainer.id; 
+            const oldContainer = draggingCard.closest('.tasks-container');
+            
+            if (oldContainer.id === newStatus) return;
+
+            if (newStatus === 'done') {
+                openConfirmDoneModal(draggingCard);
+                return; 
+            }
+
+            tasksContainer.appendChild(draggingCard); 
+            draggingCard.classList.remove('is-done'); 
+            
+            const { error } = await supabaseClient
+                .from('tasks')
+                .update({ status: newStatus }) 
+                .eq('id', taskId);
+
+            if (error) {
+                console.error('Erro ao atualizar status (drop):', error.message);
+                alert('Erro ao mover o card. A página será recarregada.');
+                await loadAllTasks();
+            }
+        });
+    });
+
+    // Listeners dos Modais do Kanban
+    addTaskBtn.addEventListener('click', () => openModal(null));
+    modalCloseBtn.addEventListener('click', closeModal);
+    taskModal.addEventListener('click', (e) => {
+        if (e.target === taskModal) closeModal();
+    });
     taskForm.addEventListener('submit', async (e) => {
         e.preventDefault(); 
         const taskData = {
@@ -308,8 +590,6 @@ document.addEventListener('DOMContentLoaded', () => {
             await loadAllTasks(); 
         }
     });
-
-    // --- Lógica de Excluir Tarefa ---
     deleteTaskBtn.addEventListener('click', async () => {
         let cardToDelete = currentEditingCard || cardToReopen;
         if (!cardToDelete) return;
@@ -327,122 +607,12 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     });
-
-    // --- ★★★ Lógica de Listeners dos Cards (Drag-and-Drop CORRIGIDA) ★★★ ---
-    function addCardListeners(card) {
-        card.addEventListener('click', () => {
-            if (card.classList.contains('is-done')) {
-                openReopenModal(card);
-            } else {
-                openModal(card);
-            }
-        });
-        
-        // ★★★ CORREÇÃO: Usando dataTransfer ★★★
-        card.addEventListener('dragstart', (e) => {
-            if (card.classList.contains('is-done')) {
-                e.preventDefault(); // Não permite arrastar cards concluídos
-                return false;
-            }
-            // Guarda o ID do card que está sendo arrastado
-            e.dataTransfer.setData('text/plain', card.dataset.taskId); 
-            // Guarda o ID numa variável global para o 'drop'
-            draggedCardId = card.dataset.taskId; 
-            
-            // Adiciona a classe 'dragging' um pouco depois para evitar bugs visuais
-            setTimeout(() => {
-                card.classList.add('dragging');
-                document.body.classList.add('is-dragging'); // ★★★ Ativa o "modo fantasma" ★★★
-            }, 0);
-        });
-
-        card.addEventListener('dragend', () => {
-            card.classList.remove('dragging');
-            draggedCardId = null; // Limpa o ID
-            document.body.classList.remove('is-dragging'); // ★★★ Desativa o "modo fantasma" ★★★
-        });
-    }
-
-    // --- Lógica de Drop (Drag-and-Drop CORRIGIDA) ---
-    // ★★★ Listeners agora são nas COLUNAS, não nos containers ★★★
-    document.querySelectorAll('.kanban-column').forEach(column => {
-        
-        column.addEventListener('dragover', (e) => {
-            e.preventDefault(); // Necessário para permitir o drop
-            
-            // Apenas mostra o 'drag-over' se o container não for o de origem
-            const draggingCard = document.querySelector('.task-card.dragging');
-            if (draggingCard && draggingCard.closest('.kanban-column') !== column) {
-                column.classList.add('drag-over'); 
-            }
-        });
-        
-        column.addEventListener('dragleave', () => {
-            column.classList.remove('drag-over');
-        });
-        
-        column.addEventListener('drop', async (e) => {
-            e.preventDefault();
-            column.classList.remove('drag-over');
-            
-            if (!draggedCardId) return; // Se nenhum card estiver sendo arrastado, sai
-            
-            const draggingCard = document.querySelector(`.task-card[data-task-id="${draggedCardId}"]`);
-            if (!draggingCard) return; // Se não encontrar o card, sai
-            
-            const taskId = draggedCardId;
-            const tasksContainer = column.querySelector('.tasks-container'); // Encontra o container *dentro* da coluna
-            
-            if (!tasksContainer) return; // Se não houver container, não faz nada
-            
-            const newStatus = tasksContainer.id; // O ID está no container
-            const oldContainer = draggingCard.closest('.tasks-container');
-            
-            if (oldContainer.id === newStatus) {
-                return; // Soltou na mesma coluna
-            }
-
-            // Se for para "Concluído", abre o modal
-            if (newStatus === 'done') {
-                openConfirmDoneModal(draggingCard);
-                return; 
-            }
-
-            // Se for para qualquer outra coluna
-            tasksContainer.appendChild(draggingCard); // Move o card no DOM
-            draggingCard.classList.remove('is-done'); 
-            
-            // ★★★ CORREÇÃO DO BUG: Atualiza APENAS o status ★★★
-            const { error } = await supabaseClient
-                .from('tasks')
-                .update({ status: newStatus }) // Não mexe no 'reopened_at'
-                .eq('id', taskId);
-
-            if (error) {
-                console.error('Erro ao atualizar status (drop):', error.message);
-                alert('Erro ao mover o card. A página será recarregada.');
-                await loadAllTasks();
-            }
-            // A tag de reabertura persiste
-        });
-    });
-    // ★★★ FIM DAS CORREÇÕES DE DRAG-AND-DROP ★★★
-
-    // --- Event Listeners dos Modais ---
-    // Modal 1
-    addTaskBtn.addEventListener('click', () => openModal(null));
-    modalCloseBtn.addEventListener('click', closeModal);
-    taskModal.addEventListener('click', (e) => {
-        if (e.target === taskModal) closeModal();
-    });
-    // Modal 2
     reopenConfirmBtn.addEventListener('click', handleReopenConfirm);
     reopenCancelBtn.addEventListener('click', closeReopenModal);
     reopenModalCloseBtn.addEventListener('click', closeReopenModal);
     reopenModal.addEventListener('click', (e) => {
         if (e.target === reopenModal) closeReopenModal();
     });
-    // Modal 3
     confirmDoneConfirmBtn.addEventListener('click', handleConfirmDone);
     confirmDoneCancelBtn.addEventListener('click', closeConfirmDoneModal);
     confirmDoneModalCloseBtn.addEventListener('click', closeConfirmDoneModal);
@@ -450,7 +620,14 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.target === confirmDoneModal) closeConfirmDoneModal();
     });
 
-    // --- CARGA INICIAL ---
+    // Listeners dos Modais de Documentação
+    addDocumentBtn.addEventListener('click', () => openDocumentEditor(null));
+    docSaveBtn.addEventListener('click', saveDocument);
+    docCloseBtn.addEventListener('click', closeDocumentEditor);
+    docDeleteBtn.addEventListener('click', deleteDocument);
+
+
+    // --- 8. CARGA INICIAL ---
     loadAllTasks();
 
 });
