@@ -3,220 +3,476 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel de Handoff TI</title>
-    
-    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
-    
-    <link rel="stylesheet" href="style.css">
-    
-    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Montserrat:wght@400;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
-    
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+    <title>MVNO Nubank Operations</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        /* --- ESTILO GERAL E FUNDO ANIMADO --- */
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(-45deg, #1f1c2c, #928DAB, #23a6d5, #23d5ab);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            color: #333;
+            overflow: hidden;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* --- GLASSMORPHISM CONTAINER --- */
+        .glass-container {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            width: 90%;
+            max-width: 900px;
+            height: 85vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .header {
+            padding: 20px 30px;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+            background: rgba(255,255,255,0.5);
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 1.5rem;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .header p {
+            margin: 5px 0 0;
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .content {
+            padding: 30px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        /* --- SEÇÕES E INPUTS --- */
+        .section-card {
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(0,0,0,0.05);
+            transition: transform 0.2s ease;
+        }
+
+        .section-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #444;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .input-wrapper {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-size: 0.85rem;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: 500;
+        }
+
+        input[type="text"] {
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: #fff;
+            transition: all 0.3s ease;
+            outline: none;
+            font-size: 0.95rem;
+        }
+
+        input[type="text"]:focus {
+            border-color: #23a6d5;
+            box-shadow: 0 0 0 3px rgba(35, 166, 213, 0.2);
+        }
+
+        /* --- BOTÕES MODERNOS --- */
+        .btn-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #2193b0, #6dd5ed);
+            color: white;
+            box-shadow: 0 4px 15px rgba(33, 147, 176, 0.3);
+        }
+
+        .btn-danger {
+            background: linear-gradient(45deg, #eb3349, #f45c43);
+            color: white;
+            box-shadow: 0 4px 15px rgba(235, 51, 73, 0.3);
+        }
+
+        .btn-success {
+            background: linear-gradient(45deg, #11998e, #38ef7d);
+            color: white;
+            box-shadow: 0 4px 15px rgba(17, 153, 142, 0.3);
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            filter: brightness(1.1);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* --- MODAL (POP-UP) --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(5px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background: white;
+            width: 90%;
+            max-width: 800px;
+            max-height: 85vh;
+            border-radius: 16px;
+            box-shadow: 0 15px 50px rgba(0,0,0,0.2);
+            transform: scale(0.8);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .modal-overlay.active .modal-content {
+            transform: scale(1);
+        }
+
+        .modal-header {
+            padding: 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            font-size: 1.2rem;
+            color: #333;
+        }
+
+        .close-btn {
+            background: transparent;
+            color: #999;
+            font-size: 1.5rem;
+            padding: 0;
+            width: 30px;
+            box-shadow: none;
+            flex: none;
+        }
+        .close-btn:hover { color: #333; background: transparent; transform: none; box-shadow: none; }
+
+        .modal-body {
+            padding: 20px;
+            overflow-y: auto;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.9rem;
+            color: #444;
+            line-height: 1.5;
+        }
+
+        /* Estilização bonita do JSON/Resultados */
+        .result-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        .result-table th, .result-table td { text-align: left; padding: 10px; border-bottom: 1px solid #eee; }
+        .result-table th { background: #f9f9f9; color: #666; width: 30%; }
+        .result-table td { color: #333; font-weight: 500; }
+        .json-key { color: #d63384; }
+        .json-string { color: #198754; }
+        .json-number { color: #0d6efd; }
+        .json-boolean { color: #fd7e14; }
+
+        .status-badge {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .bg-success { background: #d1e7dd; color: #0f5132; }
+        .bg-error { background: #f8d7da; color: #842029; }
+
+        /* Loader */
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            display: none;
+            margin: auto;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+    </style>
 </head>
-<body> <header class="app-header">
-        <div class="header-left">
-            <div class="app-logo-wrapper">
-                <img src="https://iili.io/KZoVAs1.jpg" alt="Logotipo" class="app-logo-img">
-                <span class="app-title">Equipe N2</span>
-            </div>
+<body>
+
+    <div class="glass-container">
+        <div class="header">
+            <h1>MVNO Operations Dashboard</h1>
+            <p>Interface de Gerenciamento e Execução de Processos</p>
         </div>
 
-        <div class="header-center">
-            <div class="search-bar-container">
-                <span class="material-icons-outlined">search</span>
-                <input type="text" id="search-bar" placeholder="Pesquisar por título, nº ou analista...">
-            </div>
-        </div>
-
-        <div class="header-right">
-            <button id="add-task-btn" class="btn-primary">
-                <span class="material-icons-outlined">add</span>
-                Criar
-            </button>
-        </div>
-    </header>
-
-    <main class="app-container">
-
-        <aside class="sidebar">
-            <nav class="menu-nav">
-                <a href="#" class="menu-item active" data-page="chamados" title="Chamados">
-                    <span class="material-icons-outlined">view_kanban</span>
-                    <span class="menu-item-text">Chamados</span>
-                </a>
-                <a href="#" class="menu-item" data-page="documentacao" title="Documentação">
-                    <span class="material-icons-outlined">description</span>
-                    <span class="menu-item-text">Documentação</span>
-                </a>
-                <a href="#" class="menu-item" data-page="repositorio" title="Repositório">
-                    <span class="material-icons-outlined">folder_open</span>
-                    <span class="menu-item-text">Repositório</span>
-                </a>
-            </nav>
-        </aside>
-
-        <button class="sidebar-toggle" id="sidebar-toggle-btn" title="Expandir/Recolher menu">
-            <span class="material-icons-outlined">chevron_right</span>
-        </button>
-
-        <div class="main-content-wrapper">
-            <div class="page-content">
-
-                <div id="chamados-page" class="page active">
-                    <div class="kanban-board">
-                        <div class="kanban-column">
-                            <h2><span class="material-icons-outlined">construction</span> Em Atendimento</h2>
-                            <div class="tasks-container" id="in-progress" data-column-id="in-progress"></div>
-                        </div>
-                        <div class="kanban-column">
-                            <h2><span class="material-icons-outlined">support_agent</span> Aguardando Fornecedor</h2>
-                            <div class="tasks-container" id="waiting" data-column-id="waiting"></div>
-                        </div>
-                        <div class="kanban-column">
-                            <h2><span class="material-icons-outlined">event</span> Agendado</h2>
-                            <div class="tasks-container" id="scheduled" data-column-id="scheduled"></div>
-                        </div>
-                        <div class="kanban-column">
-                            <h2><span class="material-icons-outlined">done_all</span> Concluído</h2>
-                            <div class="tasks-container" id="done" data-column-id="done"></div>
-                        </div>
+        <div class="content">
+            <div class="section-card">
+                <div class="section-title">
+                    <span>⚡</span> Fluxo Cadastro/Cancelamento PS8
+                </div>
+                <div class="form-group">
+                    <div class="input-wrapper">
+                        <label>SubscriberID</label>
+                        <input type="text" id="subIdInsert" placeholder="Ex: 99999999">
+                    </div>
+                    <div class="input-wrapper">
+                        <label>MSISDN (com DDD)</label>
+                        <input type="text" id="msisdnInsert" placeholder="Ex: 11988887777">
                     </div>
                 </div>
-
-                <div id="documentacao-page" class="page">
-                    <header class="page-header">
-                        <h2>Documentação</h2>
-                        <button id="add-document-btn" class="btn-primary">
-                            <span class="material-icons-outlined">add_box</span>
-                            Novo Documento
-                        </button>
-                    </header>
-                    <div id="doc-grid" class="doc-grid">
-                        </div>
-                </div>
-
-                <div id="repositorio-page" class="page">
-                    <h2>Repositório</h2>
-                    <p>Página de repositório de arquivos em construção.</p>
-                </div>
-
-            </div>
-        </div>
-    </main>
-    
-
-    <div id="doc-editor-overlay" class="doc-editor-overlay">
-        <div class="doc-editor-content">
-            <header class="doc-editor-header">
-                <div class="doc-editor-inputs">
-                    <input type="hidden" id="doc-id-input">
-                    <input type="text" id="doc-title-input" placeholder="Título do Documento..." class="doc-title-input">
-                    <input type="text" id="doc-description-input" placeholder="Descrição curta..." class="doc-description-input">
-                </div>
-                <div class="doc-editor-actions">
-                    <button id="doc-delete-btn" class="btn-danger">
-                        <span class="material-icons-outlined">delete_outline</span>
-                        Excluir
+                <div class="btn-group">
+                    <button class="btn-primary" onclick="runInsertFlow()">
+                        <span>▶</span> Executar Inclusão
                     </button>
-                    <button id="doc-save-btn" class="btn-primary">
-                        <span class="material-icons-outlined">save</span>
-                        Salvar
-                    </button>
-                    <button id="doc-close-btn" class="btn-secondary" title="Fechar">
-                        <span class="material-icons-outlined">close</span>
+                    <button class="btn-danger" onclick="runDeleteFlow()">
+                        <span>✕</span> Executar Cancelamento
                     </button>
                 </div>
-            </header>
-            <div id="quill-editor-container">
-                <div id="quill-editor"></div>
+            </div>
+
+            <div class="section-card">
+                <div class="section-title">
+                    <span>🔄</span> Fluxo SPS (Portabilidade/Refresh)
+                </div>
+                <div class="form-group">
+                    <div class="input-wrapper" style="grid-column: span 2;">
+                        <label>SubscriberID</label>
+                        <input type="text" id="subIdSPS" placeholder="Ex: 99999999">
+                    </div>
+                </div>
+                <div class="btn-group">
+                    <button class="btn-success" onclick="runSPSFlow('CANSUB')">
+                        <span>✨</span> Executar CANSUB
+                    </button>
+                    <button class="btn-success" onclick="runSPSFlow('REFRESH')">
+                        <span>🔄</span> CANSUB + REFRESH (Portin)
+                    </button>
+                </div>
             </div>
         </div>
     </div>
 
-
-    <div id="task-modal" class="modal-overlay">
+    <div class="modal-overlay" id="resultModal" onclick="closeModal(event)">
         <div class="modal-content">
-            <header class="modal-header">
-                <h3 id="modal-title">Adicionar Novo Chamado</h3>
-                <span class="modal-close" id="modal-close-btn">&times;</span>
-            </header>
-            <form id="task-form">
-                <input type="hidden" id="task-id-input">
-                <div class="form-group">
-                    <label for="task-title-input">Nº do Chamado / Título</label>
-                    <input type="text" id="task-title-input" placeholder="Ex: PDST-000000 / NU-1234" required>
+            <div class="modal-header">
+                <h2 id="modalTitle">Resultado da Operação</h2>
+                <button class="close-btn" onclick="closeModalBtn()">×</button>
+            </div>
+            <div class="modal-body" id="modalBody">
                 </div>
-                <div class="form-group">
-                    <label for="task-analyst-input">Analista Atual</label>
-                    <input type="text" id="task-analyst-input" placeholder="Seu nome">
-                </div>
-                <div class="form-group">
-                    <label for="task-priority-input">Prioridade</label>
-                    <select id="task-priority-input">
-                        <option value="low">Baixa</option>
-                        <option value="medium" selected>Média</option>
-                        <option value="high">Alta</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="task-description-input">Notas de Handoff (O que foi feito / Próximos passos)</label>
-                    <textarea id="task-description-input" rows="6" placeholder="Descreva o que foi feito e analisado até o momento, incluíndo por exemplo, o número de um chamado aberto para o NOC!"></textarea>
-                </div>
-                <div class="modal-timestamps">
-                    <div class="timestamp-item" id="modal-created-at"></div>
-                    <div class="timestamp-item" id="modal-reopened-at"></div>
-                </div>
-                <div class="form-actions">
-                    <button type="button" id="delete-task-btn" class="btn-danger">Excluir</button>
-                    <button type="submit" class="btn-primary">Salvar</button>
-                </div>
-            </form>
         </div>
     </div>
 
-    <div id="reopen-modal" class="modal-overlay">
-        <div class="modal-content">
-            <header class="modal-header">
-                <h3 id="reopen-modal-title">Reabrir Chamado</h3>
-                <span class="modal-close" id="reopen-modal-close-btn">&times;</span>
-            </header>
-            <div class="modal-body">
-                <p>Este chamado está marcado como "Concluído". Deseja reabri-lo?</p>
-                <p>Ele será movido para a coluna "Em Atendimento" e marcado como reaberto.</p>
-                <div class="modal-timestamps">
-                    <div class="timestamp-item" id="reopen-modal-created-at"></div>
-                </div>
-            </div>
-            <div class="form-actions" id="reopen-form-actions">
-                <button type="button" id="reopen-cancel-btn" class="btn-danger">Cancelar</button>
-                <button type="button" id="reopen-confirm-btn" class="btn-primary">Sim, Reabrir</button>
-            </div>
-        </div>
-    </div>
-    
-    <div id="confirm-done-modal" class="modal-overlay">
-        <div class="modal-content">
-            <header class="modal-header">
-                <h3 id="confirm-done-modal-title">Concluir Chamado</h3>
-                <span class="modal-close" id="confirm-done-modal-close-btn">&times;</span>
-            </header>
-            <div class="modal-body">
-                <p>Tem certeza que deseja marcar este chamado como "Concluído"?</p>
-                <p>A tag de reabertura (se existir) será removida e o card será travado.</p>
-                <div class="modal-timestamps">
-                    <div class="timestamp-item" id="confirm-done-modal-created-at"></div>
-                    <div class="timestamp-item" id="confirm-done-modal-reopened-at"></div>
-                </div>
-            </div>
-            <div class="form-actions" id="confirm-done-form-actions">
-                <button type="button" id="confirm-done-cancel-btn" class="btn-danger">Cancelar</button>
-                <button type="button" id="confirm-done-confirm-btn" class="btn-primary">Sim, Concluir</button>
-            </div>
-        </div>
-    </div>
+    <script>
+        const BASE_URL = 'http://localhost:5000/api';
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
-    <script src="script.js"></script>
+        // --- LÓGICA DO MODAL ---
+        function showModal(title, contentHTML, isError = false) {
+            const modal = document.getElementById('resultModal');
+            const titleEl = document.getElementById('modalTitle');
+            const bodyEl = document.getElementById('modalBody');
+
+            titleEl.textContent = title;
+            titleEl.style.color = isError ? '#dc3545' : '#198754';
+            bodyEl.innerHTML = contentHTML;
+
+            modal.classList.add('active');
+        }
+
+        function closeModal(e) {
+            if (e.target.id === 'resultModal') {
+                document.getElementById('resultModal').classList.remove('active');
+            }
+        }
+        function closeModalBtn() {
+            document.getElementById('resultModal').classList.remove('active');
+        }
+
+        // --- FORMATADOR DE JSON PARA HTML ---
+        function formatJSON(obj) {
+            if (typeof obj !== 'object' || obj === null) return obj;
+            
+            let html = '<table class="result-table">';
+            for (let key in obj) {
+                let value = obj[key];
+                
+                if (typeof value === 'object' && value !== null) {
+                    // Recursão para objetos aninhados
+                    value = formatJSON(value); 
+                } else if (typeof value === 'string') {
+                    value = `<span class="json-string">"${value}"</span>`;
+                } else if (typeof value === 'number') {
+                    value = `<span class="json-number">${value}</span>`;
+                } else if (typeof value === 'boolean') {
+                    value = `<span class="json-boolean">${value}</span>`;
+                }
+
+                html += `<tr><th>${key}</th><td>${value}</td></tr>`;
+            }
+            html += '</table>';
+            return html;
+        }
+
+        // --- FUNÇÃO DE REQUISIÇÃO CENTRALIZADA ---
+        async function sendRequest(endpoint, data, btnElement) {
+            const originalText = btnElement.innerHTML;
+            btnElement.innerHTML = '<div class="loader" style="display:block; border-color: white; border-top-color: transparent; width: 20px; height: 20px;"></div>';
+            btnElement.disabled = true;
+
+            try {
+                const response = await fetch(`${BASE_URL}${endpoint}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.status === 'success') {
+                    let displayContent = '';
+                    
+                    // Personaliza exibição baseada no retorno
+                    if(result.customer_data) {
+                        displayContent += '<h3>Dados do Cliente:</h3>' + formatJSON(result.customer_data);
+                    }
+                    if(result.result) {
+                         displayContent += '<h3>Dados SPS:</h3>' + formatJSON(result.result);
+                    }
+                    // Fallback para resposta genérica
+                    displayContent += '<h3>Resposta do Servidor:</h3>' + formatJSON(result.response || result);
+
+                    showModal('✅ Sucesso!', displayContent);
+                } else {
+                    const errorMsg = result.message || 'Erro desconhecido';
+                    const details = result.details ? `<br><div style="background:#eee; padding:10px; border-radius:5px; margin-top:10px;">${result.details}</div>` : '';
+                    showModal('❌ Erro na Operação', `<p>${errorMsg}</p>${details}`, true);
+                }
+
+            } catch (error) {
+                showModal('❌ Erro de Conexão', `<p>Não foi possível contatar o servidor local.</p><p>Verifique se o python app_backend.py está rodando.</p><p>${error.message}</p>`, true);
+            } finally {
+                btnElement.innerHTML = originalText;
+                btnElement.disabled = false;
+            }
+        }
+
+        // --- TRIGGERS DOS BOTÕES ---
+        function runInsertFlow() {
+            const subId = document.getElementById('subIdInsert').value;
+            const msisdn = document.getElementById('msisdnInsert').value;
+            if (!subId || !msisdn) return alert('Preencha todos os campos!');
+            sendRequest('/insert', { subscriber_id: subId, msisdn: msisdn }, event.currentTarget);
+        }
+
+        function runDeleteFlow() {
+            const msisdn = document.getElementById('msisdnInsert').value;
+            if (!msisdn) return alert('Preencha o MSISDN!');
+            if(!confirm('Tem certeza que deseja cancelar este número?')) return;
+            sendRequest('/delete', { msisdn: msisdn }, event.currentTarget);
+        }
+
+        function runSPSFlow(op_type) {
+            const subId = document.getElementById('subIdSPS').value;
+            if (!subId) return alert('Preencha o SubscriberID!');
+            sendRequest('/sps_flow', { subscriber_id: subId, op_type: op_type }, event.currentTarget);
+        }
+    </script>
 </body>
 </html>
